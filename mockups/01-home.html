@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KalingaLink — Home</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: {
+      brand: { 50:'#fef7ee',100:'#fdecd3',500:'#e07a3b',600:'#c75f24',700:'#9c481b' },
+      ink:   { 900:'#1a1a1a',700:'#3a3a3a',500:'#6b6b6b' } } } } };
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style> body { font-family: 'Inter', system-ui, sans-serif; } </style>
+</head>
+<body class="bg-brand-50 text-ink-900 min-h-screen flex flex-col">
+
+<header class="bg-white border-b border-brand-100">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+    <a href="index.html" class="flex items-center gap-2">
+      <span class="inline-block h-8 w-8 rounded-full bg-brand-500"></span>
+      <span class="font-semibold text-lg">KalingaLink</span>
+    </a>
+    <nav class="flex items-center gap-1 text-sm font-medium">
+      <a class="px-3 py-2 rounded-md bg-brand-100 text-brand-700">Home</a>
+      <a class="px-3 py-2 rounded-md text-ink-700 hover:text-brand-600" href="02-events.html">Events</a>
+      <a class="px-3 py-2 rounded-md text-ink-700 hover:text-brand-600" href="05-organizer-dashboard.html">Dashboard</a>
+      <a class="ml-2 rounded-lg bg-brand-500 text-white px-4 py-2" href="08-login.html">Sign in</a>
+    </nav>
+  </div>
+</header>
+
+<main class="flex-1 max-w-6xl w-full mx-auto px-4 py-10 space-y-10">
+
+  <section class="rounded-2xl bg-white p-8 shadow-sm border border-brand-100 grid md:grid-cols-2 gap-8 items-center">
+    <div>
+      <span class="inline-block bg-brand-100 text-brand-700 text-xs font-semibold uppercase rounded-full px-3 py-1 mb-3">Sitio Villegas Pilot</span>
+      <h1 class="text-4xl font-bold mb-4">Coordinating care for our community.</h1>
+      <p class="text-ink-700 mb-6 leading-relaxed">
+        KalingaLink helps organizers, volunteers, donors, and partners run sustainable
+        feeding programs — together. Built to support what's already happening, not replace it.
+      </p>
+      <div class="flex gap-3">
+        <a href="02-events.html" class="rounded-lg bg-brand-500 text-white px-5 py-2.5 font-medium">Browse events</a>
+        <a href="08-login.html" class="rounded-lg border border-brand-500 text-brand-600 px-5 py-2.5 font-medium">Volunteer sign in</a>
+      </div>
+    </div>
+    <div class="grid grid-cols-3 gap-3">
+      <div class="rounded-2xl bg-brand-50 p-5 text-center border border-brand-100">
+        <div class="text-3xl font-bold text-brand-600">30</div>
+        <div class="text-xs text-ink-500 mt-1">Children served</div>
+      </div>
+      <div class="rounded-2xl bg-brand-50 p-5 text-center border border-brand-100">
+        <div class="text-3xl font-bold text-brand-600">18</div>
+        <div class="text-xs text-ink-500 mt-1">Improved status</div>
+      </div>
+      <div class="rounded-2xl bg-brand-50 p-5 text-center border border-brand-100">
+        <div class="text-3xl font-bold text-brand-600">12</div>
+        <div class="text-xs text-ink-500 mt-1">Today's target</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid md:grid-cols-3 gap-4">
+    <div class="rounded-2xl bg-white p-6 shadow-sm border border-brand-100">
+      <div class="h-10 w-10 rounded-lg bg-brand-100 text-brand-600 flex items-center justify-center font-bold mb-3">V</div>
+      <h3 class="font-semibold text-lg mb-1">Volunteer matching</h3>
+      <p class="text-ink-700 text-sm">Sign up for committees that fit your skills and time — measuring, food prep, art, games, documentation.</p>
+    </div>
+    <div class="rounded-2xl bg-white p-6 shadow-sm border border-brand-100">
+      <div class="h-10 w-10 rounded-lg bg-brand-100 text-brand-600 flex items-center justify-center font-bold mb-3">R</div>
+      <h3 class="font-semibold text-lg mb-1">Resource tracking</h3>
+      <p class="text-ink-700 text-sm">See what's needed for each event. Donors pledge supplies. Organizers mark received on event day.</p>
+    </div>
+    <div class="rounded-2xl bg-white p-6 shadow-sm border border-brand-100">
+      <div class="h-10 w-10 rounded-lg bg-brand-100 text-brand-600 flex items-center justify-center font-bold mb-3">G</div>
+      <h3 class="font-semibold text-lg mb-1">Growth monitoring</h3>
+      <p class="text-ink-700 text-sm">Authorized health staff record consented child data. Privacy-first, audit-logged, never public.</p>
+    </div>
+  </section>
+
+  <section class="rounded-2xl bg-brand-700 text-white p-8 flex flex-col md:flex-row items-center justify-between gap-4">
+    <div>
+      <h3 class="text-xl font-semibold">Want to support the next feeding event?</h3>
+      <p class="text-brand-100 text-sm">Pledge supplies, join a committee, or partner with us.</p>
+    </div>
+    <a href="07-resources.html" class="rounded-lg bg-white text-brand-700 px-5 py-2.5 font-medium">See current needs</a>
+  </section>
+</main>
+
+<footer class="bg-white border-t border-brand-100 py-6 text-center text-sm text-ink-500">
+  KalingaLink — A volunteer & resource coordination platform · HUME 100
+</footer>
+</body>
+</html>

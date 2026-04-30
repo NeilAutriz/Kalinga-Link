@@ -1,0 +1,41 @@
+{
+  "users": [
+    {
+      "email": "organizer@kalingalink.local",
+      "fullName": "Kristine Organizer",
+      "role": "organizer",
+      "affiliation": "Sitio Villegas Lead"
+    },
+    {
+      "email": "volunteer@kalingalink.local",
+      "fullName": "Sample Volunteer",
+      "role": "volunteer",
+      "affiliation": "UPLB"
+    }
+  ],
+  "events": [
+    {
+      "title": "Sitio Villegas Feeding — November",
+      "location": "Sitio Villegas Covered Court",
+      "eventDate": "2026-11-15T01:00:00.000Z",
+      "startTime": "09:00",
+      "endTime": "12:00",
+      "targetChildren": 30,
+      "status": "published"
+    }
+  ],
+  "committees": [
+    { "name": "Food Preparation", "slotCount": 6 },
+    { "name": "Measuring", "slotCount": 3 },
+    { "name": "Bubbles & Games", "slotCount": 4 },
+    { "name": "Street Art", "slotCount": 4 },
+    { "name": "Documentation", "slotCount": 2 }
+  ],
+  "resource_needs": [
+    { "itemName": "Rice", "category": "food", "quantityNeeded": 5, "unit": "kg" },
+    { "itemName": "Chicken", "category": "food", "quantityNeeded": 3, "unit": "kg" },
+    { "itemName": "Disposable bowls", "category": "utensils", "quantityNeeded": 40, "unit": "pcs" },
+    { "itemName": "Crayons", "category": "art", "quantityNeeded": 10, "unit": "box" },
+    { "itemName": "Hygiene kits", "category": "hygiene", "quantityNeeded": 30, "unit": "pcs" }
+  ]
+}

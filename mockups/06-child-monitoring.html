@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KalingaLink — Child Monitoring</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: {
+      brand: { 50:'#fef7ee',100:'#fdecd3',500:'#e07a3b',600:'#c75f24',700:'#9c481b' },
+      ink:   { 900:'#1a1a1a',700:'#3a3a3a',500:'#6b6b6b' } } } } };
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style> body { font-family: 'Inter', system-ui, sans-serif; } </style>
+</head>
+<body class="bg-brand-50 text-ink-900 min-h-screen flex flex-col">
+
+<header class="bg-white border-b border-brand-100">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+    <a href="index.html" class="flex items-center gap-2">
+      <span class="inline-block h-8 w-8 rounded-full bg-brand-500"></span>
+      <span class="font-semibold text-lg">KalingaLink</span>
+    </a>
+    <nav class="text-sm font-medium">
+      <span class="inline-flex items-center gap-2 rounded-full bg-red-50 text-red-700 px-3 py-1 text-xs">
+        🔒 Restricted area · Health/Organizer only
+      </span>
+    </nav>
+  </div>
+</header>
+
+<main class="flex-1 max-w-6xl w-full mx-auto px-4 py-8 space-y-6">
+
+  <div class="rounded-xl bg-yellow-50 border border-yellow-200 text-yellow-900 p-4 text-sm">
+    <strong>Privacy notice.</strong> All entries require guardian consent. Every read/write is audit-logged.
+    No child data appears on public pages or in URLs.
+  </div>
+
+  <section class="rounded-2xl bg-white p-6 border border-brand-100">
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-xl font-bold">Child records</h1>
+      <button class="rounded-lg bg-brand-500 text-white px-4 py-2 text-sm font-medium">+ Add child (with consent)</button>
+    </div>
+    <table class="w-full text-sm">
+      <thead class="text-ink-500 text-left">
+        <tr><th class="py-2">Code</th><th>First name</th><th>Age</th><th>Last status</th><th>Last measured</th><th></th></tr>
+      </thead>
+      <tbody class="divide-y divide-brand-100">
+        <tr><td class="py-3 font-mono text-xs">A4K9TZ2P</td><td>Maria</td><td>5</td><td><span class="inline-flex rounded-full bg-green-100 text-green-700 text-xs px-2 py-0.5">improved</span></td><td>Oct 18</td><td class="text-right"><a class="text-brand-600 text-sm">Open</a></td></tr>
+        <tr><td class="py-3 font-mono text-xs">B8M2WQ4R</td><td>Joaquin</td><td>6</td><td><span class="inline-flex rounded-full bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5">no_change</span></td><td>Oct 18</td><td class="text-right"><a class="text-brand-600 text-sm">Open</a></td></tr>
+        <tr><td class="py-3 font-mono text-xs">C7H3PK8X</td><td>Liza</td><td>4</td><td><span class="inline-flex rounded-full bg-green-100 text-green-700 text-xs px-2 py-0.5">improved</span></td><td>Oct 18</td><td class="text-right"><a class="text-brand-600 text-sm">Open</a></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="grid md:grid-cols-2 gap-6">
+    <div class="rounded-2xl bg-white p-6 border border-brand-100">
+      <h2 class="font-semibold mb-4">Add measurement (Maria · A4K9TZ2P)</h2>
+      <form class="space-y-3 text-sm">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-medium">Height (cm)</label>
+            <input class="w-full rounded-lg border border-brand-100 px-3 py-2" placeholder="105" />
+          </div>
+          <div>
+            <label class="font-medium">Weight (kg)</label>
+            <input class="w-full rounded-lg border border-brand-100 px-3 py-2" placeholder="17" />
+          </div>
+        </div>
+        <div>
+          <label class="font-medium">Status</label>
+          <select class="w-full rounded-lg border border-brand-100 px-3 py-2">
+            <option>baseline</option><option>monitored</option><option selected>improved</option>
+            <option>no_change</option><option>declined</option>
+          </select>
+        </div>
+        <div>
+          <label class="font-medium">Notes</label>
+          <textarea class="w-full rounded-lg border border-brand-100 px-3 py-2" rows="2"></textarea>
+        </div>
+        <button class="rounded-lg bg-brand-500 text-white px-4 py-2 font-medium">Save measurement</button>
+      </form>
+    </div>
+
+    <div class="rounded-2xl bg-white p-6 border border-brand-100">
+      <h2 class="font-semibold mb-4">Maria — history</h2>
+      <ul class="space-y-3 text-sm">
+        <li class="flex justify-between border-b border-brand-100 pb-2">
+          <span>Oct 18, 2026</span><span>105cm · 17kg</span>
+          <span class="inline-flex rounded-full bg-green-100 text-green-700 text-xs px-2 py-0.5">improved</span>
+        </li>
+        <li class="flex justify-between border-b border-brand-100 pb-2">
+          <span>Sep 20, 2026</span><span>104cm · 16kg</span>
+          <span class="inline-flex rounded-full bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5">monitored</span>
+        </li>
+        <li class="flex justify-between">
+          <span>Aug 16, 2026</span><span>103cm · 15.5kg</span>
+          <span class="inline-flex rounded-full bg-gray-100 text-gray-700 text-xs px-2 py-0.5">baseline</span>
+        </li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer class="bg-white border-t border-brand-100 py-6 text-center text-sm text-ink-500">KalingaLink · Mockup</footer>
+</body>
+</html>

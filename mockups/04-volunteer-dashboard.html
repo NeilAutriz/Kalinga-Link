@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KalingaLink — My Schedule</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: {
+      brand: { 50:'#fef7ee',100:'#fdecd3',500:'#e07a3b',600:'#c75f24',700:'#9c481b' },
+      ink:   { 900:'#1a1a1a',700:'#3a3a3a',500:'#6b6b6b' } } } } };
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style> body { font-family: 'Inter', system-ui, sans-serif; } </style>
+</head>
+<body class="bg-brand-50 text-ink-900 min-h-screen flex flex-col">
+
+<header class="bg-white border-b border-brand-100">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+    <a href="index.html" class="flex items-center gap-2">
+      <span class="inline-block h-8 w-8 rounded-full bg-brand-500"></span>
+      <span class="font-semibold text-lg">KalingaLink</span>
+    </a>
+    <nav class="flex items-center gap-1 text-sm font-medium">
+      <a class="px-3 py-2 rounded-md text-ink-700 hover:text-brand-600" href="02-events.html">Events</a>
+      <a class="px-3 py-2 rounded-md bg-brand-100 text-brand-700">My schedule</a>
+      <span class="ml-3 inline-flex items-center gap-2">
+        <span class="h-8 w-8 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-sm font-bold">SV</span>
+        <span class="text-sm">Sample Volunteer</span>
+      </span>
+    </nav>
+  </div>
+</header>
+
+<main class="flex-1 max-w-6xl w-full mx-auto px-4 py-8 space-y-6">
+  <section class="grid md:grid-cols-3 gap-4">
+    <div class="rounded-2xl bg-white p-5 border border-brand-100 text-center">
+      <div class="text-3xl font-bold text-brand-600">3</div>
+      <div class="text-sm text-ink-500">Upcoming commitments</div>
+    </div>
+    <div class="rounded-2xl bg-white p-5 border border-brand-100 text-center">
+      <div class="text-3xl font-bold text-brand-600">7</div>
+      <div class="text-sm text-ink-500">Events attended</div>
+    </div>
+    <div class="rounded-2xl bg-white p-5 border border-brand-100 text-center">
+      <div class="text-3xl font-bold text-brand-600">100%</div>
+      <div class="text-sm text-ink-500">Reliability</div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="text-lg font-semibold mb-3">Your upcoming roles</h2>
+    <div class="space-y-3">
+      <div class="rounded-2xl bg-white p-5 border border-brand-100 flex items-center justify-between">
+        <div>
+          <div class="text-sm text-ink-500">Nov 15, 2026 · 09:00</div>
+          <div class="font-semibold">Sitio Villegas Feeding — November</div>
+          <div class="text-sm text-brand-700 mt-1">Committee: Bubbles & Games</div>
+        </div>
+        <div class="flex gap-2">
+          <button class="rounded-lg border border-brand-100 text-ink-700 px-3 py-2 text-sm">Cancel</button>
+          <a href="03-event-detail.html" class="rounded-lg bg-brand-500 text-white px-4 py-2 text-sm font-medium">Details</a>
+        </div>
+      </div>
+      <div class="rounded-2xl bg-white p-5 border border-brand-100 flex items-center justify-between">
+        <div>
+          <div class="text-sm text-ink-500">Dec 13, 2026 · 09:00</div>
+          <div class="font-semibold">Sitio Villegas Feeding — December</div>
+          <div class="text-sm text-brand-700 mt-1">Committee: Documentation</div>
+        </div>
+        <div class="flex gap-2">
+          <button class="rounded-lg border border-brand-100 text-ink-700 px-3 py-2 text-sm">Cancel</button>
+          <a href="03-event-detail.html" class="rounded-lg bg-brand-500 text-white px-4 py-2 text-sm font-medium">Details</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="text-lg font-semibold mb-3">Reminders</h2>
+    <div class="rounded-2xl bg-brand-100/60 border border-brand-100 p-5 text-sm text-ink-700">
+      We'll email you 24 hours before each event with directions and committee notes. You can cancel up to 24 hours before the event.
+    </div>
+  </section>
+</main>
+
+<footer class="bg-white border-t border-brand-100 py-6 text-center text-sm text-ink-500">KalingaLink · Mockup</footer>
+</body>
+</html>
