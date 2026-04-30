@@ -38,9 +38,23 @@ const pledgeSchema = z.object({
   quantity: z.number().int().min(1),
 });
 
+// Roles that may NOT create a pledge while signed in. Anonymous pledges are
+// still allowed (donate page works for the public). Organizers should use a
+// separate donor account if they personally want to give; health partners do
+// not pledge supplies — both rules mirror the role cards on the About page.
+const PLEDGE_BLOCKED_ROLES = new Set(['organizer', 'health']);
+
 // Public (anonymous OK), but if logged-in we link the pledge to the user account.
 r.post('/pledges', optionalAuth, validate(pledgeSchema), async (req, res, next) => {
   try {
+    if (req.user && PLEDGE_BLOCKED_ROLES.has(req.user.role)) {
+      return res.status(403).json({
+        error:
+          req.user.role === 'organizer'
+            ? 'Organizers manage pledges; please use a separate donor account to give personally.'
+            : 'Health partners are recorded as event partners and do not take pledge slots.',
+      });
+    }
     const need = await ResourceNeed.findById(req.body.resourceNeedId).lean();
     if (!need) return res.status(404).json({ error: 'Resource need not found' });
     const pledge = await Pledge.create({

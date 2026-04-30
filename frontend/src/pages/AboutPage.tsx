@@ -1,9 +1,10 @@
 import { PageHeader } from '../components/PageHeader';
 import {
   Heart, Users, ShieldCheck, Target, Sprout, MapPin, Mountain, Footprints,
-  Home as HomeIcon, Utensils, Stethoscope, BookOpen,
+  Home as HomeIcon, Utensils, Stethoscope, BookOpen, Check, X,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { ROLE_INFO, ROLE_ORDER } from '../lib/nav';
 
 export default function AboutPage() {
   return (
@@ -112,6 +113,56 @@ export default function AboutPage() {
             <p className="mt-2 text-sm text-ink-700 leading-relaxed">{body}</p>
           </article>
         ))}
+      </section>
+
+      {/* Four roles */}
+      <section className="container-page mt-12">
+        <div className="flex items-end justify-between flex-wrap gap-3">
+          <div>
+            <span className="eyebrow">Four roles, one program</span>
+            <h2 className="section-title mt-1">Who does what inside KalingaLink</h2>
+            <p className="mt-2 max-w-2xl text-sm text-ink-700">
+              Every account has a single role. The role decides which pages you see and which actions you can take —
+              so that volunteers, donors, organizers, and health partners each get exactly the tools they need, and
+              nothing they don't.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {ROLE_ORDER.map((r) => {
+            const info = ROLE_INFO[r];
+            const Icon = info.icon;
+            return (
+              <article key={r} className="card flex flex-col">
+                <div className="flex items-center gap-3">
+                  <div className={`h-11 w-11 grid place-items-center rounded-xl ${info.chipClass}`}>
+                    <Icon size={20} aria-hidden />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-phthalo-500">{info.label}</h3>
+                    <div className="text-[11px] uppercase tracking-[0.14em] font-semibold text-maximum-600">{info.tagline}</div>
+                  </div>
+                </div>
+                <p className="mt-3 text-sm text-ink-700 leading-relaxed">{info.summary}</p>
+                <ul className="mt-3 space-y-1.5 text-xs text-ink-700">
+                  {info.can.map((c) => (
+                    <li key={c} className="flex gap-1.5"><Check size={13} className="text-maximum-600 mt-0.5 shrink-0"/><span>{c}</span></li>
+                  ))}
+                  {info.cannot.map((c) => (
+                    <li key={c} className="flex gap-1.5 text-ink-500"><X size={13} className="text-rose-500 mt-0.5 shrink-0"/><span>{c}</span></li>
+                  ))}
+                </ul>
+              </article>
+            );
+          })}
+        </div>
+
+        <p className="mt-4 text-xs text-ink-500">
+          Not sure which one to pick? Most people start as a <strong>Volunteer</strong> or <strong>Donor</strong> —
+          you can ask an admin to switch later. The <strong>Health partner</strong> and <strong>Organizer</strong>
+          roles are reviewed before sensitive features (child records, event creation) unlock.
+        </p>
       </section>
 
       {/* CTA */}

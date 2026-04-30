@@ -4,11 +4,16 @@ import { User } from '../models/User.js';
 import { env } from '../config/env.js';
 import { HttpError } from '../middleware/error.js';
 
-export const register = async ({ email, password, fullName, contactNumber, affiliation }) => {
+export const register = async ({ email, password, fullName, contactNumber, affiliation, role }) => {
   const exists = await User.findOne({ email });
   if (exists) throw new HttpError(409, 'Email already registered');
   const passwordHash = await argon2.hash(password, { type: argon2.argon2id });
-  const user = await User.create({ email, passwordHash, fullName, contactNumber, affiliation });
+  // role is already constrained by the Zod validator to volunteer|donor; the
+  // User model enum is the second line of defense. Default to volunteer.
+  const user = await User.create({
+    email, passwordHash, fullName, contactNumber, affiliation,
+    role: role ?? 'volunteer',
+  });
   return user;
 };
 

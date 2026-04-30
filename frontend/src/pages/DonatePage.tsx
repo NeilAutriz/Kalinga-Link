@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Loader2, HeartHandshake, CheckCircle2, Calendar, MapPin, Sparkles,
   Utensils, Stethoscope, BookOpen, Leaf, Briefcase, Palette,
   Apple, Soup, Pill, Brush, Wrench, Truck, Package, Minus, Plus,
-  Info, ShieldCheck, Send,
+  Info, ShieldCheck, Send, Lock,
 } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
 import { ProgressBar } from '../components/ProgressBar';
@@ -13,6 +13,7 @@ import { useToast } from '../components/Toast';
 import { useApi } from '../lib/useApi';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
+import { CAN_DONATE, ROLE_INFO } from '../lib/nav';
 import type { EventItem, ResourceCategory, ResourceNeed, Program } from '../lib/types';
 import { norm, PROGRAM_LABELS } from '../lib/types';
 import { formatDate, pct } from '../lib/format';
@@ -46,6 +47,10 @@ export default function DonatePage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [params] = useSearchParams();
+
+  // Role gate: signed-in organizers and health partners cannot pledge.
+  // Anonymous (signed-out) visitors are still welcome to donate.
+  const blockedByRole = !!user && !CAN_DONATE.includes(user.role);
 
   const events = useApi<EventItem[]>('/events?status=published');
   const eventOptions = (events.data ?? [])
@@ -123,6 +128,53 @@ export default function DonatePage() {
     const needed   = allResources.reduce((s, r) => s + r.quantityNeeded, 0);
     return { received, needed, percent: pct(received, needed) };
   }, [allResources]);
+
+  // Role-gated explainer: shown to signed-in organizers / health partners
+  // instead of the donate form. They can still browse needs via /resources.
+  if (blockedByRole && user) {
+    const info = ROLE_INFO[user.role];
+    const Icon = info.icon;
+    return (
+      <div>
+        <PageHeader
+          eyebrow="Pledge supplies"
+          title="This page is for donors and volunteers"
+          description="Your role coordinates the program — pledging is reserved for donor (and volunteer) accounts so dashboards stay clean."
+        />
+        <section className="container-page max-w-2xl pb-16">
+          <div className="card">
+            <div className="flex items-start gap-3">
+              <div className={clsx('h-11 w-11 grid place-items-center rounded-xl shrink-0', info.chipClass)}>
+                <Icon size={20} aria-hidden />
+              </div>
+              <div className="min-w-0">
+                <div className="font-semibold text-phthalo-500">You're signed in as a {info.label}</div>
+                <div className="text-xs uppercase tracking-[0.12em] text-maximum-600 mt-0.5">{info.tagline}</div>
+                <p className="mt-3 text-sm text-ink-700 leading-relaxed">
+                  {user.role === 'organizer'
+                    ? 'Organizers manage which supplies are needed and confirm receipt — they do not pledge through their organizer account. If you want to give personally, sign out and donate as a guest, or use a separate donor account.'
+                    : 'Health partners are recorded as event partners and focus on child monitoring. Pledging supplies is handled by donor and volunteer accounts.'}
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Link to="/resources" className="btn-outline btn-sm"><Package size={14}/> Browse open needs</Link>
+                  {user.role === 'organizer' && (
+                    <Link to="/organizer" className="btn-primary btn-sm">Back to organizer console</Link>
+                  )}
+                  {user.role === 'health' && (
+                    <Link to="/children" className="btn-primary btn-sm">Open child monitoring</Link>
+                  )}
+                </div>
+                <div className="mt-4 flex items-start gap-2 text-[11px] text-ink-500">
+                  <Lock size={12} className="mt-0.5 shrink-0"/>
+                  <span>Backend also enforces this — <code>POST /api/v1/resources/pledges</code> rejects {info.label.toLowerCase()} accounts with HTTP 403.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div>
