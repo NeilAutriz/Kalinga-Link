@@ -12,9 +12,10 @@ import { ChildRecord } from '../models/ChildRecord.js';
 import { Measurement } from '../models/Measurement.js';
 
 // ============================================================================
-// KalingaLink seed — Los Baños, Laguna context
-// 22 users · 12 events across 6 program types · 60 committees · ~120 signups
-// 132 resource needs · ~250 pledges · 18 child records · 54 measurements
+// KalingaLink seed — Sitio Villegas program (Brgy. Putho-Tuntungin, Los Baños)
+// 22 users · 12 events (10 in Sitio Villegas, 2 partner sites) · ~60 committees
+// ~120 signups · 132 resource needs · ~250 pledges · 18 child records
+// 54 measurements across 3 monitored cycles
 // ============================================================================
 
 const days = (n) => 24 * 60 * 60 * 1000 * n;
@@ -37,12 +38,12 @@ const run = async () => {
   const passwordHash = await argon2.hash('password123', { type: argon2.argon2id });
   const usersToCreate = [
     // Organizers (3)
-    { email: 'organizer@kalingalink.local', fullName: 'Kristine Villegas',     role: 'organizer', affiliation: 'Sitio Villegas Lead, Brgy. Batong Malake' },
+    { email: 'organizer@kalingalink.local', fullName: 'Kristine Villegas',     role: 'organizer', affiliation: 'Sitio Villegas Lead · Brgy. Putho-Tuntungin' },
     { email: 'mark@kalingalink.local',      fullName: 'Mark Reyes',            role: 'organizer', affiliation: 'UPLB Community Service Sangguniang' },
-    { email: 'rhea@kalingalink.local',      fullName: 'Rhea Bautista',         role: 'organizer', affiliation: 'Brgy. Anos Outreach' },
+    { email: 'rhea@kalingalink.local',      fullName: 'Rhea Bautista',         role: 'organizer', affiliation: 'Brgy. Putho-Tuntungin Kagawad · Health Committee' },
 
     // Health workers (3)
-    { email: 'health@kalingalink.local',    fullName: 'Dr. Maria Santos',      role: 'health',    affiliation: 'Brgy. Batong Malake Health Center' },
+    { email: 'health@kalingalink.local',    fullName: 'Dr. Maria Santos',      role: 'health',    affiliation: 'Putho-Tuntungin Brgy. Health Station' },
     { email: 'liza.cruz@kalingalink.local', fullName: 'Liza Cruz, RN',         role: 'health',    affiliation: 'UPLB University Health Service' },
     { email: 'noel.dela@kalingalink.local', fullName: 'Noel Dela Peña, RMT',   role: 'health',    affiliation: 'Los Baños Doctors Hospital' },
 
@@ -84,96 +85,106 @@ const run = async () => {
   const RHEA = byEmail['rhea@kalingalink.local']._id;
   const MARK = byEmail['mark@kalingalink.local']._id;
 
+  // The location every monthly visit is held at — the sitio's small covered
+  // basketball half-court, which doubles as their community gathering space.
+  const VILLEGAS = {
+    barangay: 'Putho-Tuntungin',
+    sitio: 'Sitio Villegas',
+    location: 'Sitio Villegas Covered Court (host: Ate Kristine\u2019s house)',
+  };
+
   const eventSeeds = [
-    // ----- COMPLETED (track record) -----
+    // ----- COMPLETED (track record, last ~4 months in the sitio) -----
     {
-      title: 'Sitio Villegas Feeding — January (baseline)',
-      description: 'Year-opener feeding & re-baseline of growth measurements for tracked children.',
-      program: 'feeding', barangay: 'Batong Malake', sitio: 'Sitio Villegas',
-      partnerOrg: 'Brgy. Batong Malake', location: 'Sitio Villegas Covered Court',
+      title: 'Villegas Feeding Cycle — January (baseline)',
+      description: 'Year-opener monthly feeding plus re-baseline of growth measurements for the 30+ children registered in the program.',
+      program: 'feeding', ...VILLEGAS,
+      partnerOrg: 'Brgy. Putho-Tuntungin Council',
       eventDate: at(-110), startTime: '09:00', endTime: '12:00', targetChildren: 28, status: 'completed', createdBy: ORG,
     },
     {
-      title: 'Sitio Villegas Feeding — February',
-      description: 'Second cycle. Introduced bubbles & street-art committees alongside food prep.',
-      program: 'feeding', barangay: 'Batong Malake', sitio: 'Sitio Villegas',
-      partnerOrg: 'UPLB Community Service Sangguniang', location: 'Sitio Villegas Covered Court',
+      title: 'Villegas Feeding Cycle — February',
+      description: 'Second monthly visit. Introduced bubbles & street-art committees alongside the cooking team.',
+      program: 'feeding', ...VILLEGAS,
+      partnerOrg: 'UPLB Community Service Sangguniang',
       eventDate: at(-78), startTime: '09:00', endTime: '12:00', targetChildren: 30, status: 'completed', createdBy: ORG,
     },
     {
-      title: 'Brgy. Anos Deworming & Vitamins Drive',
-      description: 'Quarterly deworming and vitamin A distribution coordinated with the Los Baños Rural Health Unit.',
-      program: 'health', barangay: 'Anos', sitio: 'Sitio Maligaya',
-      partnerOrg: 'LB Rural Health Unit', location: 'Brgy. Anos Health Center',
-      eventDate: at(-46), startTime: '08:00', endTime: '11:00', targetChildren: 60, status: 'completed', createdBy: RHEA,
+      title: 'Villegas Deworming & Vitamins — Q1',
+      description: 'Quarterly deworming, vitamin A drops, and BP screening for guardians, run by the Putho-Tuntungin Brgy. Health Station midwives.',
+      program: 'health', ...VILLEGAS,
+      partnerOrg: 'Putho-Tuntungin Brgy. Health Station',
+      eventDate: at(-46), startTime: '08:00', endTime: '11:00', targetChildren: 32, status: 'completed', createdBy: RHEA,
     },
     {
-      title: 'Sitio Villegas Feeding — March (outcome)',
-      description: 'Outcome cycle for Q1. 30 children served · 18 improved · 22 volunteers attended.',
-      program: 'feeding', barangay: 'Batong Malake', sitio: 'Sitio Villegas',
-      partnerOrg: 'UPLB Mountaineers', location: 'Sitio Villegas Covered Court',
+      title: 'Villegas Feeding Cycle — March (Q1 outcome)',
+      description: 'Outcome cycle for Q1. 30 children served, 18 measured as improved, 22 volunteers attended.',
+      program: 'feeding', ...VILLEGAS,
+      partnerOrg: 'UPLB Mountaineers',
       eventDate: at(-18), startTime: '09:00', endTime: '12:00', targetChildren: 30, status: 'completed', createdBy: ORG,
     },
 
     // ----- ONGOING / IMMEDIATE (this week) -----
     {
-      title: 'Reading Buddies — Brgy. Bambang',
-      description: 'After-school tutorial in Filipino & English literacy for grades 1–3, partnered with Bambang Elementary.',
-      program: 'learning', barangay: 'Bambang', sitio: 'Purok 3',
-      partnerOrg: 'Bambang Elementary School', location: 'Bambang Elementary School Library',
-      eventDate: at(2), startTime: '14:00', endTime: '17:00', targetChildren: 25, status: 'published', createdBy: MARK,
+      title: 'Saturday Reading Buddies — Sitio Villegas',
+      description: 'After-feeding tutorial in Filipino & English literacy for the sitio\u2019s grades 1\u20133 children, run from the covered court.',
+      program: 'learning', ...VILLEGAS,
+      partnerOrg: 'UPLB CSS · Reading Volunteers',
+      eventDate: at(2), startTime: '14:00', endTime: '17:00', targetChildren: 18, status: 'published', createdBy: MARK,
     },
 
     // ----- PUBLISHED (next 30 days) -----
     {
-      title: 'Sitio Villegas Feeding — May',
-      description: 'Monthly feeding and child development support, in partnership with Ms. Kristine and the Sitio Villegas community since 2023.',
-      program: 'feeding', barangay: 'Batong Malake', sitio: 'Sitio Villegas',
-      partnerOrg: 'Brgy. Batong Malake', location: 'Sitio Villegas Covered Court',
+      title: 'Villegas Feeding Cycle — May',
+      description: 'Monthly feeding and child development support, in partnership with Ate Kristine and the Sitio Villegas community since 2023.',
+      program: 'feeding', ...VILLEGAS,
+      partnerOrg: 'Brgy. Putho-Tuntungin Council',
       eventDate: at(8), startTime: '09:00', endTime: '12:00', targetChildren: 30, status: 'published', createdBy: ORG,
     },
     {
-      title: 'Mt. Makiling Trailhead Cleanup',
-      description: 'Half-day cleanup along the Mudspring trailhead with segregation training, in coordination with MENRO.',
-      program: 'environment', barangay: 'Bayog', sitio: 'Trailhead Sector',
-      partnerOrg: 'LB MENRO · UPLB Mountaineers', location: 'Mt. Makiling Mudspring Trailhead',
+      title: 'Sitio Villegas Trail & Spring Cleanup',
+      description: 'Half-day cleanup along the access trail and around the spring-fed reservoir the sitio shares for water. Includes segregation briefing.',
+      program: 'environment', ...VILLEGAS,
+      partnerOrg: 'UPLB Mountaineers · Brgy. Putho-Tuntungin',
+      location: 'Sitio Villegas access trail \u2192 spring reservoir',
       eventDate: at(12), startTime: '06:30', endTime: '11:00', targetChildren: 0, status: 'published', createdBy: MARK,
     },
     {
-      title: 'Brgy. Maahas Hilot & BP Screening',
-      description: 'Free blood-pressure screening and basic check-ups for senior citizens, with IRRI medical volunteers.',
-      program: 'health', barangay: 'Maahas', sitio: 'Phase 1',
-      partnerOrg: 'IRRI Staff Council · LB Doctors Hospital', location: 'Brgy. Maahas Multi-purpose Hall',
+      title: 'Hilot at Hapag — Maternal Nutrition Pop-up',
+      description: 'Pop-up nutrition counseling for the guardians of registered children, with IRRI medical volunteers and the UPLB Nutrition Society.',
+      program: 'health', ...VILLEGAS,
+      partnerOrg: 'IRRI Staff Council · UPLB BS Nutrition',
       eventDate: at(15), startTime: '08:30', endTime: '12:00', targetChildren: 0, status: 'published', createdBy: RHEA,
     },
     {
-      title: 'Pahiyas-themed Art Day — Brgy. Tadlac',
-      description: 'Mural painting and recycled-materials art with kids near Tadlac Lake. Tied to the Pahiyas season.',
-      program: 'youth', barangay: 'Tadlac', sitio: 'Lakeside',
-      partnerOrg: 'Tadlac Lake Stewards', location: 'Tadlac Lakeside Pavilion',
-      eventDate: at(20), startTime: '13:00', endTime: '17:00', targetChildren: 35, status: 'published', createdBy: MARK,
+      title: 'Pahiyas-themed Art Day — Sitio Villegas',
+      description: 'Mural painting on the covered court walls and recycled-materials art with the kabataan of the sitio. Tied to the Pahiyas season.',
+      program: 'youth', ...VILLEGAS,
+      partnerOrg: 'UPLB Fine Arts Circle',
+      eventDate: at(20), startTime: '13:00', endTime: '17:00', targetChildren: 25, status: 'published', createdBy: MARK,
     },
     {
-      title: 'Hilot at Hapag — Sitio Villegas June',
+      title: 'Villegas Feeding Cycle — June',
       description: 'June feeding bundled with maternal nutrition counseling for guardians.',
-      program: 'feeding', barangay: 'Batong Malake', sitio: 'Sitio Villegas',
-      partnerOrg: 'UPLB BS Nutrition Society', location: 'Sitio Villegas Covered Court',
+      program: 'feeding', ...VILLEGAS,
+      partnerOrg: 'UPLB BS Nutrition Society',
       eventDate: at(38), startTime: '09:00', endTime: '12:30', targetChildren: 32, status: 'published', createdBy: ORG,
     },
 
     // ----- DRAFT (planning) -----
     {
-      title: 'Tahanan Livelihood Workshop — Brgy. Putho-Tuntungin',
-      description: 'Soap-making and budgeting workshop for guardians of children we monitor. Two-Saturday series.',
-      program: 'livelihood', barangay: 'Putho-Tuntungin', sitio: 'Purok 2',
-      partnerOrg: 'UPLB BS HE · Brgy. Putho-Tuntungin', location: 'Brgy. Putho-Tuntungin Hall',
+      title: 'Tahanan Livelihood Workshop for Villegas Nanays',
+      description: 'Two-Saturday series on soap-making and small-budget meal planning for the guardians of children we monitor. Held at the barangay hall (downhill).',
+      program: 'livelihood', barangay: 'Putho-Tuntungin', sitio: 'Sitio Villegas',
+      partnerOrg: 'UPLB BS HE · Brgy. Putho-Tuntungin',
+      location: 'Brgy. Putho-Tuntungin Multi-purpose Hall',
       eventDate: at(55), startTime: '09:00', endTime: '15:00', targetChildren: 0, status: 'draft', createdBy: MARK,
     },
     {
       title: 'Christmas Feeding & Toy Drive — Sitio Villegas',
-      description: 'December special with extended art, games, and a community gift exchange for tracked children.',
-      program: 'feeding', barangay: 'Batong Malake', sitio: 'Sitio Villegas',
-      partnerOrg: 'Los Baños Coffee Club · UPLB Mountaineers', location: 'Sitio Villegas Covered Court',
+      description: 'December noche-buena visit with extended art, games, and a community gift exchange for every registered child of the sitio.',
+      program: 'feeding', ...VILLEGAS,
+      partnerOrg: 'Los Baños Coffee Club · UPLB Mountaineers',
       eventDate: at(75), startTime: '09:00', endTime: '14:00', targetChildren: 40, status: 'draft', createdBy: ORG,
     },
   ];

@@ -72,7 +72,7 @@ export default function DonatePage() {
       <PageHeader
         eyebrow="Donate supplies"
         title="Pledge to a real, scheduled event"
-        description="Choose an upcoming Los Baños event and the supply you would like to contribute. Pledges are saved live to the database."
+        description="Choose an upcoming Sitio Villegas visit and the supply you would like to contribute. Pledges are saved live to the database."
       />
 
       <section className="container-page grid md:grid-cols-3 gap-6">
@@ -140,7 +140,7 @@ export default function DonatePage() {
           <h3 className="font-semibold text-phthalo-500">Where pledges go</h3>
           <p className="mt-2 text-sm text-ink-700">
             Every pledge is tied to a scheduled feeding, health, learning, environment, livelihood or youth event in
-            Los Baños — managed by KalingaLink organizers and tracked in our shared database.
+            Sitio Villegas, Brgy. Putho-Tuntungin — managed by KalingaLink organizers and tracked in our shared database.
           </p>
           <ul className="mt-3 space-y-2 text-sm text-ink-700">
             <li>• In-kind drop-offs welcome at UPLB CSS office</li>

@@ -39,7 +39,7 @@ export default function ChildMonitoringPage() {
       <PageHeader
         eyebrow="Child monitoring · authorized staff only"
         title="Anonymized growth records"
-        description="Tracks consented children's measurements across Los Baños feeding cycles. Only organizer/health roles can view."
+        description="Tracks consented children’s measurements across Sitio Villegas feeding cycles. Only organizer/health roles can view."
       />
 
       <section className="container-page grid sm:grid-cols-4 gap-3">

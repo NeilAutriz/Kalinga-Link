@@ -41,14 +41,14 @@ export default function EventsPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="Programs across Los Baños"
+        eyebrow="Visits & programs"
         title="Find an event near you"
-        description="Browse upcoming feeding cycles, health missions, learning sessions, environmental drives and more — filter by program and barangay."
+        description="Browse upcoming visits to Sitio Villegas — feeding cycles, health pop-ups, reading sessions, trail cleanups, and youth-arts days. Filter by program."
       />
 
       <section className="container-page">
         <div className="card-tight grid md:grid-cols-3 gap-3">
-          <input className="input" placeholder="Search by title, barangay, or location…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input className="input" placeholder="Search by title, program, or location…" value={q} onChange={(e) => setQ(e.target.value)} />
           <select className="select" value={program} onChange={(e) => setProgram(e.target.value as Program | 'all')}>
             {PROGRAMS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
           </select>

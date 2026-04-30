@@ -23,7 +23,7 @@ export default function ResourcesPage() {
       <PageHeader
         eyebrow="Open resource needs"
         title="Help us prepare each cycle"
-        description="Donations of food, supplies, books, art materials and equipment go directly to scheduled Los Baños events."
+        description="Donations of food, supplies, books, art materials, and equipment go directly to the next monthly visit at Sitio Villegas, Brgy. Putho-Tuntungin."
         actions={<Link to="/donate" className="btn-primary">Make a pledge</Link>}
       />
 
