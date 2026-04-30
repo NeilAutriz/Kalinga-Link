@@ -132,9 +132,9 @@ export default function DonatePage() {
         description="Three quick steps: pick the visit, pick the supply, share your contact. Pledges are saved to the database and an organizer follows up to coordinate drop-off."
       />
 
-      <section className="container-page grid lg:grid-cols-3 gap-6">
-        {/* ════════════════════ FORM ════════════════════ */}
-        <form onSubmit={askConfirm} className="lg:col-span-2 space-y-5">
+      <section className="container-page grid lg:grid-cols-3 gap-6 pb-16">
+        {/* ═══════════════════ FORM ═══════════════════ */}
+        <form onSubmit={askConfirm} className="lg:col-span-2 space-y-6">
           {/* Step 1 — Visit */}
           <Step number={1} title="Choose a visit" subtitle={selectedEvent ? `${formatDate(selectedEvent.eventDate)} · ${selectedEvent.startTime}` : 'Pick from currently published Sitio Villegas visits.'}>
             {events.loading && <LoaderRow text="Loading visits…" />}
@@ -229,106 +229,109 @@ export default function DonatePage() {
 
           {/* Step 3 — Quantity & details */}
           <Step number={3} title="How much, and how should we reach you?" subtitle="Quantity, contact, and any note for the organizers.">
-            {/* Quantity stepper */}
-            <div>
-              <label className="label">Quantity ({selectedNeed?.unit ?? 'units'})</label>
-              <div className="flex items-stretch gap-2">
-                <button type="button" className="btn-outline !px-3" disabled={!selectedNeed || quantity <= 1}
-                        onClick={() => setQuantity((q) => Math.max(1, q - 1))}>
-                  <Minus size={14}/>
-                </button>
-                <input
-                  type="number" min={1} max={remaining || undefined}
-                  className="input text-center !w-24"
-                  value={quantity}
-                  onChange={(e) => setQuantity(Math.max(1, Math.min(remaining || Infinity, Number(e.target.value) || 1)))}
-                  disabled={!selectedNeed}
-                />
-                <button type="button" className="btn-outline !px-3" disabled={!selectedNeed || (remaining > 0 && quantity >= remaining)}
-                        onClick={() => setQuantity((q) => Math.min(remaining || Infinity, q + 1))}>
-                  <Plus size={14}/>
-                </button>
-                {selectedNeed && remaining > 1 && (
-                  <div className="ml-2 flex flex-wrap items-center gap-1.5">
-                    {[1, Math.ceil(remaining / 4), Math.ceil(remaining / 2), remaining]
-                      .filter((v, i, a) => v >= 1 && a.indexOf(v) === i)
-                      .map((v) => (
-                        <button key={v} type="button"
-                                onClick={() => setQuantity(v)}
-                                className={clsx('badge cursor-pointer !text-[11px] !py-1',
-                                  quantity === v ? 'bg-phthalo-500 text-milk' : 'bg-bone-100 text-ink-700 hover:bg-bone-200')}>
-                          {v === remaining ? `All (${v})` : v}
-                        </button>
-                      ))}
-                  </div>
+            <div className="space-y-6">
+              {/* Quantity stepper */}
+              <div>
+                <label className="label">Quantity ({selectedNeed?.unit ?? 'units'})</label>
+                <div className="flex flex-wrap items-stretch gap-2">
+                  <button type="button" className="btn-outline !px-3" disabled={!selectedNeed || quantity <= 1}
+                          onClick={() => setQuantity((q) => Math.max(1, q - 1))}>
+                    <Minus size={14}/>
+                  </button>
+                  <input
+                    type="number" min={1} max={remaining || undefined}
+                    className="input text-center !w-24"
+                    value={quantity}
+                    onChange={(e) => setQuantity(Math.max(1, Math.min(remaining || Infinity, Number(e.target.value) || 1)))}
+                    disabled={!selectedNeed}
+                  />
+                  <button type="button" className="btn-outline !px-3" disabled={!selectedNeed || (remaining > 0 && quantity >= remaining)}
+                          onClick={() => setQuantity((q) => Math.min(remaining || Infinity, q + 1))}>
+                    <Plus size={14}/>
+                  </button>
+                  {selectedNeed && remaining > 1 && (
+                    <div className="flex flex-wrap items-center gap-1.5 ml-1">
+                      {[1, Math.ceil(remaining / 4), Math.ceil(remaining / 2), remaining]
+                        .filter((v, i, a) => v >= 1 && a.indexOf(v) === i)
+                        .map((v) => (
+                          <button key={v} type="button"
+                                  onClick={() => setQuantity(v)}
+                                  className={clsx('badge cursor-pointer !text-[11px] !py-1',
+                                    quantity === v ? 'bg-phthalo-500 text-milk' : 'bg-bone-100 text-ink-700 hover:bg-bone-200')}>
+                            {v === remaining ? `All (${v})` : v}
+                          </button>
+                        ))}
+                    </div>
+                  )}
+                </div>
+                {selectedNeed && (
+                  <p className="mt-2 text-xs text-ink-500">
+                    You can pledge up to <strong>{remaining} {selectedNeed.unit}</strong>. We will record any partial fulfilment when items arrive.
+                  </p>
                 )}
               </div>
-              {selectedNeed && (
-                <p className="mt-2 text-xs text-ink-500">
-                  You can pledge up to <strong>{remaining} {selectedNeed.unit}</strong>. We will record any partial fulfilment when items arrive.
-                </p>
-              )}
-            </div>
 
-            {/* Donor identity */}
-            <div className="grid sm:grid-cols-2 gap-3 mt-4">
+              {/* Donor identity */}
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="label">Your name</label>
+                  <input
+                    className="input" required={!anonymous} disabled={anonymous}
+                    placeholder={anonymous ? 'Anonymous donor' : 'Juana Dela Cruz'}
+                    value={anonymous ? '' : donorName}
+                    onChange={(e) => setDonorName(e.target.value)} />
+                </div>
+                <div>
+                  <label className="label">Contact (email or mobile)</label>
+                  <input
+                    className="input" required type="text"
+                    placeholder="you@example.com  ·  09xx xxx xxxx"
+                    value={donorContact}
+                    onChange={(e) => setDonorContact(e.target.value)} />
+                </div>
+              </div>
+
+              <label className="flex items-start gap-2.5 text-sm text-ink-700 leading-snug">
+                <input type="checkbox" className="checkbox mt-0.5 shrink-0" checked={anonymous} onChange={(e) => setAnonymous(e.target.checked)} />
+                <span>Show me as <strong>Anonymous donor</strong> publicly (organizers still need your contact for receipt).</span>
+              </label>
+
+              {/* Drop-off preference */}
               <div>
-                <label className="label">Your name</label>
-                <input
-                  className="input" required={!anonymous} disabled={anonymous}
-                  placeholder={anonymous ? 'Anonymous donor' : 'Juana Dela Cruz'}
-                  value={anonymous ? '' : donorName}
-                  onChange={(e) => setDonorName(e.target.value)} />
+                <label className="label">How will you fulfil the pledge?</label>
+                <div className="grid sm:grid-cols-3 gap-3">
+                  {([
+                    { v: 'self',   t: 'I will drop off',   d: 'At UPLB CSS office, weekday afternoons.' },
+                    { v: 'pickup', t: 'Please pick up',    d: 'Within Los Baños only. Coordinate via call.' },
+                    { v: 'onsite', t: 'Bring on visit day', d: 'Hand over directly at Sitio Villegas court.' },
+                  ] as const).map((o) => (
+                    <button key={o.v} type="button" onClick={() => setDropoff(o.v)}
+                      className={clsx('text-left rounded-xl border p-4 transition',
+                        dropoff === o.v
+                          ? 'border-maximum-500 bg-maximum-50'
+                          : 'border-bone-200 bg-milk hover:border-maximum-300')}>
+                      <div className="text-sm font-semibold text-phthalo-500 leading-tight">{o.t}</div>
+                      <div className="text-[11px] text-ink-500 mt-1.5 leading-relaxed">{o.d}</div>
+                    </button>
+                  ))}
+                </div>
               </div>
+
+              {/* Optional message */}
               <div>
-                <label className="label">Contact (email or mobile)</label>
-                <input
-                  className="input" required type="text"
-                  placeholder="you@example.com  ·  09xx xxx xxxx"
-                  value={donorContact}
-                  onChange={(e) => setDonorContact(e.target.value)} />
+                <label className="label">Message to organizers <span className="text-ink-400 font-normal">(optional)</span></label>
+                <textarea
+                  rows={3} cols={1}
+                  className="textarea block w-full"
+                  placeholder="e.g. I can drop off Saturday morning. Brand of rice is Sinandomeng."
+                  value={message} onChange={(e) => setMessage(e.target.value.slice(0, 280))} />
+                <div className="mt-1 flex justify-end text-[11px] text-ink-400">{message.length}/280</div>
               </div>
+
+              <button type="submit" disabled={!effectiveNeedId || !selectedEvent} className="btn-primary w-full justify-center">
+                <HeartHandshake size={16}/> Review & confirm pledge
+              </button>
             </div>
-
-            <label className="mt-3 flex items-center gap-2 text-sm text-ink-700">
-              <input type="checkbox" className="checkbox" checked={anonymous} onChange={(e) => setAnonymous(e.target.checked)} />
-              Show me as <strong>Anonymous donor</strong> publicly (organizers still need your contact for receipt).
-            </label>
-
-            {/* Drop-off preference */}
-            <div className="mt-4">
-              <label className="label">How will you fulfil the pledge?</label>
-              <div className="grid sm:grid-cols-3 gap-2">
-                {([
-                  { v: 'self',   t: 'I will drop off',   d: 'At UPLB CSS office, weekday afternoons.' },
-                  { v: 'pickup', t: 'Please pick up',    d: 'Within Los Baños only. Coordinate via call.' },
-                  { v: 'onsite', t: 'Bring on visit day', d: 'Hand over directly at Sitio Villegas court.' },
-                ] as const).map((o) => (
-                  <button key={o.v} type="button" onClick={() => setDropoff(o.v)}
-                    className={clsx('text-left rounded-xl border p-3 transition',
-                      dropoff === o.v
-                        ? 'border-maximum-500 bg-maximum-50'
-                        : 'border-bone-200 bg-milk hover:border-maximum-300')}>
-                    <div className="text-sm font-semibold text-phthalo-500">{o.t}</div>
-                    <div className="text-[11px] text-ink-500 mt-0.5 leading-snug">{o.d}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Optional message */}
-            <div className="mt-4">
-              <label className="label">Message to organizers <span className="text-ink-400 font-normal">(optional)</span></label>
-              <textarea
-                className="textarea"
-                placeholder="e.g. I can drop off Saturday morning. Brand of rice is Sinandomeng."
-                value={message} onChange={(e) => setMessage(e.target.value.slice(0, 280))} />
-              <div className="text-[11px] text-ink-400 text-right">{message.length}/280</div>
-            </div>
-
-            <button type="submit" disabled={!effectiveNeedId || !selectedEvent} className="btn-primary w-full justify-center mt-2">
-              <HeartHandshake size={16}/> Review & confirm pledge
-            </button>
           </Step>
         </form>
 
