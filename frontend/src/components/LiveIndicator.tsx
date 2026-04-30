@@ -12,7 +12,7 @@ export function LiveIndicator({ live, className }: { live: boolean; className?: 
       title={live ? 'Live data from MongoDB' : 'Demo data (API offline)'}
     >
       {live ? <Wifi size={10} /> : <WifiOff size={10} />}
-      {live ? 'Live · Atlas' : 'Demo data'}
+      {live ? 'Live' : 'Demo data'}
     </span>
   );
 }

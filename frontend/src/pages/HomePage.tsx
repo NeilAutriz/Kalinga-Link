@@ -106,7 +106,7 @@ export default function HomePage() {
               <div className="card">
                 <div className="flex items-center justify-between">
                   <span className="eyebrow !mb-0">Next visit</span>
-                  <span className="badge-green">Live · Atlas</span>
+                  <span className="badge-green">Live</span>
                 </div>
                 {eventsLoading && <div className="mt-3 flex items-center gap-2 text-ink-500 text-sm"><Loader2 className="animate-spin" size={14}/> Loading…</div>}
                 {!eventsLoading && !next && <p className="mt-2 text-sm text-ink-500">No upcoming visits scheduled yet.</p>}
@@ -136,13 +136,13 @@ export default function HomePage() {
           </div>
           <p className="text-sm text-ink-500 max-w-md">Live counts pulled from KalingaLink — every monthly visit, every consented child measurement, every pledge.</p>
         </div>
-        <div className="mt-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          <Stat icon={<Sparkles size={18}/>}       label="Visits completed"   value={impact?.eventsCompleted ?? '—'} />
-          <Stat icon={<Users size={18}/>}          label="Children registered" value={impact?.childrenServed   ?? '—'} tone="phthalo"/>
-          <Stat icon={<Activity size={18}/>}       label="Children improved"  value={impact?.childrenImproved ?? '—'} hint="Measured WFA gains"/>
-          <Stat icon={<HeartHandshake size={18}/>} label="Volunteers"         value={impact?.volunteersEngaged?? '—'} tone="bone"/>
-          <Stat icon={<Gift size={18}/>}           label="Pledges received"   value={impact?.pledgesReceived  ?? '—'} />
-          <Stat                                     label="Volunteer hours"   value={impact?.hoursVolunteered ?? '—'} tone="phthalo"/>
+        <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <Stat icon={<Sparkles size={18}/>}       label="Visits done"      value={impact?.eventsCompleted ?? '—'} />
+          <Stat icon={<Users size={18}/>}          label="Children"         value={impact?.childrenServed   ?? '—'} tone="phthalo" hint="Registered in program"/>
+          <Stat icon={<Activity size={18}/>}       label="Improving"        value={impact?.childrenImproved ?? '—'} hint="Measured WFA gains"/>
+          <Stat icon={<HeartHandshake size={18}/>} label="Volunteers"       value={impact?.volunteersEngaged?? '—'} tone="bone"/>
+          <Stat icon={<Gift size={18}/>}           label="Pledges"          value={impact?.pledgesReceived  ?? '—'} hint="Received this cycle"/>
+          <Stat                                     label="Volunteer hrs"   value={impact?.hoursVolunteered ?? '—'} tone="phthalo"/>
         </div>
       </section>
 
@@ -230,7 +230,7 @@ export default function HomePage() {
           <Link to="/events" className="text-sm text-maximum-700 font-medium hover:underline">See all events →</Link>
         </div>
         {eventsLoading ? (
-          <div className="mt-6 flex items-center gap-2 text-ink-500"><Loader2 className="animate-spin" size={16}/> Loading from MongoDB Atlas…</div>
+          <div className="mt-6 flex items-center gap-2 text-ink-500"><Loader2 className="animate-spin" size={16}/> Loading…</div>
         ) : upcoming.length === 0 ? (
           <p className="mt-6 text-sm text-ink-500">No additional published visits at the moment. Check back after the next planning meeting.</p>
         ) : (

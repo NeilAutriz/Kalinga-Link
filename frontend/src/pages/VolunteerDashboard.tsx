@@ -128,7 +128,7 @@ export default function VolunteerDashboard() {
       {showSignups && (
         <section className="container-page mt-8">
           <h2 className="section-title">Upcoming sign-ups</h2>
-          {signups.loading && <div className="text-ink-500 flex items-center gap-2 mt-2"><Loader2 className="animate-spin" size={14}/> Loading from MongoDB Atlas…</div>}
+          {signups.loading && <div className="text-ink-500 flex items-center gap-2 mt-2"><Loader2 className="animate-spin" size={14}/> Loading…</div>}
           {signups.error && <EmptyState title="Could not load sign-ups" description={signups.error} />}
           {!signups.loading && !signups.error && upcoming.length === 0 && (
             <EmptyState title="No upcoming sign-ups" description="Browse events and pick a committee to volunteer." action={<Link to="/events" className="btn-accent">Browse events</Link>} />

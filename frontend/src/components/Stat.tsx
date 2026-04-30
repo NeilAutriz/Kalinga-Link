@@ -17,19 +17,21 @@ const toneMap = {
 
 export function Stat({ label, value, hint, icon, tone = 'maximum' }: Props) {
   return (
-    <div className="card-tight">
-      <div className="flex items-center gap-3">
+    <div className="card-tight h-full flex flex-col">
+      <div className="flex items-start gap-3">
         {icon && (
-          <div className={clsx('h-10 w-10 grid place-items-center rounded-xl', toneMap[tone])}>
+          <div className={clsx('h-10 w-10 shrink-0 grid place-items-center rounded-xl', toneMap[tone])}>
             {icon}
           </div>
         )}
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="text-2xl font-display font-bold text-phthalo-500 leading-tight">{value}</div>
-          <div className="text-xs text-ink-500 truncate">{label}</div>
+          <div className="text-[11px] uppercase tracking-[0.08em] text-ink-500 leading-snug break-words">
+            {label}
+          </div>
         </div>
       </div>
-      {hint && <p className="mt-3 text-xs text-ink-500">{hint}</p>}
+      {hint && <p className="mt-2 text-[11px] text-ink-500 leading-snug">{hint}</p>}
     </div>
   );
 }

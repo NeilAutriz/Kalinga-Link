@@ -60,7 +60,7 @@ export default function OrganizerDashboard() {
 
       <section className="container-page mt-8">
         <h2 className="section-title">All events (live)</h2>
-        {events.loading && <div className="text-ink-500 flex items-center gap-2"><Loader2 className="animate-spin" size={14}/> Loading from MongoDB Atlas…</div>}
+        {events.loading && <div className="text-ink-500 flex items-center gap-2"><Loader2 className="animate-spin" size={14}/> Loading…</div>}
         {events.error && <EmptyState title="Could not load events" description={events.error} />}
         {!events.loading && !events.error && all.length === 0 && <EmptyState title="No events yet" description="Run the seed script to populate." />}
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 mt-3">
