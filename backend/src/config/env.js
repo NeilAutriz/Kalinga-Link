@@ -18,4 +18,5 @@ export const env = {
   EMAIL_PROVIDER: process.env.EMAIL_PROVIDER ?? 'resend',
   EMAIL_API_KEY: process.env.EMAIL_API_KEY ?? '',
   EMAIL_FROM: process.env.EMAIL_FROM ?? 'KalingaLink <no-reply@kalingalink.local>',
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY ?? '',
 };
