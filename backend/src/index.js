@@ -13,10 +13,21 @@ import routes from './routes/index.js';
 
 const app = express();
 
+// Trust proxy (Railway / any reverse proxy) so secure cookies + rate limit IPs work
+app.set('trust proxy', 1);
+
+// Allow comma-separated list of origins in CLIENT_ORIGIN
+const allowedOrigins = env.CLIENT_ORIGIN.split(',').map((s) => s.trim()).filter(Boolean);
+
 app.use(helmet());
 app.use(
   cors({
-    origin: env.CLIENT_ORIGIN,
+    origin: (origin, cb) => {
+      // Allow same-origin / curl / server-to-server (no Origin header)
+      if (!origin) return cb(null, true);
+      if (allowedOrigins.includes(origin)) return cb(null, true);
+      return cb(new Error(`CORS: origin ${origin} not allowed`));
+    },
     credentials: true,
   }),
 );

@@ -5,7 +5,7 @@ import { User } from '../models/User.js';
 const cookieOpts = {
   httpOnly: true,
   secure: env.COOKIE_SECURE,
-  sameSite: 'lax',
+  sameSite: env.COOKIE_SAMESITE,
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 

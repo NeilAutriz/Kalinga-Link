@@ -4,6 +4,9 @@
   "description": "KalingaLink REST API (Express + Mongoose)",
   "type": "module",
   "main": "src/index.js",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
