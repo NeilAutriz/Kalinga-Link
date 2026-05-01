@@ -19,4 +19,5 @@ export const env = {
   EMAIL_API_KEY: process.env.EMAIL_API_KEY ?? '',
   EMAIL_FROM: process.env.EMAIL_FROM ?? 'KalingaLink <no-reply@kalingalink.local>',
   GEMINI_API_KEY: process.env.GEMINI_API_KEY ?? '',
+  GROQ_API_KEY: process.env.GROQ_API_KEY ?? '',
 };
