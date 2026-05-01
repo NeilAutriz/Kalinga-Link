@@ -12,8 +12,8 @@ import type { EventItem, ImpactStats, Program } from '../lib/types';
 import { norm, PROGRAM_LABELS } from '../lib/types';
 import { formatDate } from '../lib/format';
 
-/* ── Wikimedia Commons (public domain / CC) imagery ── */
-const HERO_IMG     = 'https://upload.wikimedia.org/wikipedia/commons/7/7b/Los_Banos%2C_Mount_Makiling.jpg';
+/* ── Local hero imagery (place files in /frontend/public) ── */
+const HERO_IMG     = '/sitio-villegas.png';
 const MAKILING_IMG = 'https://upload.wikimedia.org/wikipedia/commons/8/81/LosBa%C3%B1osHalljf8752_06.JPG';
 
 const PROGRAM_CARDS: { program: Program; icon: typeof Utensils; blurb: string }[] = [
