@@ -84,6 +84,9 @@ export default function DonatePage() {
   const [submitting,  setSubmitting]  = useState(false);
   const [thanksOpen,  setThanksOpen]  = useState(false);
 
+  const [nameError,    setNameError]    = useState('');
+  const [contactError, setContactError] = useState('');
+
   useEffect(() => { if (user) { setDonorName(user.fullName); setDonorContact(user.email); } }, [user]);
   // Reset supply choice & quantity whenever event changes
   useEffect(() => { setNeedId(''); setQuantity(1); }, [effectiveEventId]);
@@ -92,11 +95,34 @@ export default function DonatePage() {
 
   const askConfirm = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!effectiveEventId)              return toast.error('Pick a visit', 'Choose an upcoming Sitio Villegas visit first.');
-    if (!effectiveNeedId)               return toast.error('Pick a supply', 'Choose a resource to pledge.');
-    if (quantity < 1)                   return toast.error('Quantity must be at least 1');
-    if (!anonymous && !donorName.trim()) return toast.error('Add your name', 'Or toggle anonymous donation.');
-    if (!donorContact.trim())            return toast.error('Add your contact info', 'So we can confirm receipt.');
+    if (!effectiveEventId) return toast.error('Pick a visit', 'Choose an upcoming Sitio Villegas visit first.');
+    if (!effectiveNeedId)  return toast.error('Pick a supply', 'Choose a resource to pledge.');
+    if (quantity < 1)      return toast.error('Quantity must be at least 1');
+
+    let valid = true;
+
+    if (!anonymous && !donorName.trim()) {
+      setNameError('Please enter your name, or toggle anonymous donation.');
+      valid = false;
+    } else {
+      setNameError('');
+    }
+
+    if (!donorContact.trim()) {
+      setContactError('Contact is required so we can confirm receipt.');
+      valid = false;
+    } else {
+      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(donorContact.trim());
+      const isPhone = /^(\+63|0)9\d{9}$/.test(donorContact.trim());
+      if (!isEmail && !isPhone) {
+        setContactError('Enter a valid email or PH mobile number (09XXXXXXXXX or +639XXXXXXXXX).');
+        valid = false;
+      } else {
+        setContactError('');
+      }
+    }
+
+    if (!valid) return;
     setConfirmOpen(true);
   };
 
@@ -328,18 +354,22 @@ export default function DonatePage() {
                 <div>
                   <label className="label">Your name</label>
                   <input
-                    className="input" required={!anonymous} disabled={anonymous}
+                    className={clsx('input', nameError && 'border-red-400 focus:ring-red-300')}
+                    required={!anonymous} disabled={anonymous}
                     placeholder={anonymous ? 'Anonymous donor' : 'Juana Dela Cruz'}
                     value={anonymous ? '' : donorName}
-                    onChange={(e) => setDonorName(e.target.value)} />
+                    onChange={(e) => { setDonorName(e.target.value); if (nameError) setNameError(''); }} />
+                  {nameError && <p className="mt-1 text-xs text-red-600">{nameError}</p>}
                 </div>
                 <div>
                   <label className="label">Contact (email or mobile)</label>
                   <input
-                    className="input" required type="text"
+                    className={clsx('input', contactError && 'border-red-400 focus:ring-red-300')}
+                    required type="text"
                     placeholder="you@example.com  ·  09xx xxx xxxx"
                     value={donorContact}
-                    onChange={(e) => setDonorContact(e.target.value)} />
+                    onChange={(e) => { setDonorContact(e.target.value); if (contactError) setContactError(''); }} />
+                  {contactError && <p className="mt-1 text-xs text-red-600">{contactError}</p>}
                 </div>
               </div>
 
