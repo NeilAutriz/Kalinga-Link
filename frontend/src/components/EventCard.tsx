@@ -1,3 +1,4 @@
+import type React from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarDays, MapPin, Users, Building2 } from 'lucide-react';
 import type { EventItem } from '../lib/types';
@@ -5,7 +6,7 @@ import { PROGRAM_LABELS, PROGRAM_TONES } from '../lib/types';
 import { formatDate } from '../lib/format';
 import { StatusBadge } from './StatusBadge';
 
-export function EventCard({ event }: { event: EventItem }) {
+export function EventCard({ event, actions }: { event: EventItem; actions?: React.ReactNode }) {
   const programLabel = event.program ? PROGRAM_LABELS[event.program] : 'Program';
   const programTone  = event.program ? PROGRAM_TONES[event.program] : 'bg-bone-100 text-ink-700';
 
@@ -39,7 +40,8 @@ export function EventCard({ event }: { event: EventItem }) {
         )}
       </dl>
 
-      <div className="mt-5 flex justify-end">
+      <div className="mt-auto pt-5 flex items-center justify-end gap-2">
+        {actions}
         <Link to={`/events/${event.id}`} className="btn-primary">View &amp; sign up</Link>
       </div>
     </article>

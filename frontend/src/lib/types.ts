@@ -42,6 +42,15 @@ export type Committee = {
 export type ResourceCategory =
   | 'food' | 'utensils' | 'art' | 'hygiene' | 'equipment' | 'transport' | 'other';
 
+export type ResourceNeedInput = {
+  eventId: string;
+  itemName: string;
+  category: ResourceCategory;
+  quantityNeeded: number;
+  unit: string;
+  notes?: string;
+};
+
 export type ResourceNeed = {
   id: string;
   _id?: string;
