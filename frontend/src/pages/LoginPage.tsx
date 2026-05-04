@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Loader2, LogIn } from 'lucide-react';
+import { Loader2, LogIn, Eye, EyeOff } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
@@ -23,6 +23,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setBusy(true);
@@ -48,7 +49,12 @@ export default function LoginPage() {
           </div>
           <div>
             <label className="label">Password</label>
-            <input className="input" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+            <div className="relative">
+              <input className="input pr-10" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+              <button type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword(p => !p)} className="absolute inset-y-0 right-0 flex items-center px-3 text-ink-400 hover:text-ink-600 transition">
+                {showPassword ? <EyeOff size={16}/> : <Eye size={16}/>}
+              </button>
+            </div>
           </div>
           <button type="submit" disabled={busy} className="btn-primary w-full justify-center">
             {busy ? <><Loader2 className="animate-spin" size={16}/> Signing in…</> : <><LogIn size={16}/> Sign in</>}

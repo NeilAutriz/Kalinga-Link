@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Loader2, UserPlus, Check, Lock } from 'lucide-react';
+import { Loader2, UserPlus, Check, Lock, Eye, EyeOff } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
@@ -23,9 +23,17 @@ export default function RegisterPage() {
   const [role, setRole] = useState<Role>('volunteer');
   const [affiliation, setAffiliation] = useState('');
   const [busy, setBusy] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setBusy(true);
+    if (password !== confirmPassword) {
+      toast.error('Passwords do not match', 'Please make sure both passwords are the same.');
+      setBusy(false);
+      return;
+    }
     try {
       await register({ fullName, email, password, role, affiliation: affiliation || undefined });
       toast.success(`Welcome, ${fullName.split(' ')[0]}!`, 'Your KalingaLink account is ready.');
@@ -41,19 +49,36 @@ export default function RegisterPage() {
       <section className="container-page max-w-3xl">
         <form onSubmit={submit} className="card space-y-5">
           <div className="grid sm:grid-cols-2 gap-3">
+            {/* Row 1: Full Name | Password */}
             <div>
               <label className="label">Full name</label>
               <input className="input" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
             </div>
             <div>
+              <label className="label">Password (min 8 chars)</label>
+              <div className="relative">
+                <input className="input pr-10" type={showPassword ? 'text' : 'password'} required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
+                <button type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword(p => !p)} className="absolute inset-y-0 right-0 flex items-center px-3 text-ink-400 hover:text-ink-600 transition">
+                  {showPassword ? <EyeOff size={16}/> : <Eye size={16}/>}
+                </button>
+              </div>
+            </div>
+            {/* Row 2: Email | Confirm Password */}
+            <div>
               <label className="label">Email</label>
               <input className="input" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
             <div>
-              <label className="label">Password (min 8 chars)</label>
-              <input className="input" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
+              <label className="label">Confirm password</label>
+              <div className="relative">
+                <input className="input pr-10" type={showConfirmPassword ? 'text' : 'password'} required minLength={8} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                <button type="button" aria-label={showConfirmPassword ? 'Hide password' : 'Show password'} onClick={() => setShowConfirmPassword(p => !p)} className="absolute inset-y-0 right-0 flex items-center px-3 text-ink-400 hover:text-ink-600 transition">
+                  {showConfirmPassword ? <EyeOff size={16}/> : <Eye size={16}/>}
+                </button>
+              </div>
             </div>
-            <div>
+            {/* Row 3: Affiliation full width */}
+            <div className="sm:col-span-2">
               <label className="label">Affiliation</label>
               <input className="input" value={affiliation} onChange={(e) => setAffiliation(e.target.value)} placeholder="UPLB college · IRRI unit · parish · brgy · org" />
             </div>
