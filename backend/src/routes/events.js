@@ -52,4 +52,14 @@ r.post('/', requireAuth, requireRole('organizer'), validate(createSchema), async
   }
 });
 
+const updateSchema = createSchema.partial();
+
+r.patch('/:id', requireAuth, requireRole('organizer'), validate(updateSchema), async (req, res, next) => {
+  try {
+    const event = await Event.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    if (!event) return res.status(404).json({ error: 'NotFound' });
+    res.json({ event });
+  } catch (e) { next(e); }
+});
+
 export default r;

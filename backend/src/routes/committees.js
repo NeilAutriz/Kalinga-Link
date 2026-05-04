@@ -102,4 +102,25 @@ r.delete('/signups/:id', requireAuth, async (req, res, next) => {
   }
 });
 
+// POST / — organizer creates a committee slot set for an event
+r.post('/', requireAuth, async (req, res, next) => {
+  if (req.user.role !== 'organizer') return res.status(403).json({ error: 'Organizer only' });
+  try {
+    const { eventId, name, description = '', slotCount } = req.body;
+    if (!eventId || !name || !slotCount) return res.status(400).json({ error: 'eventId, name, slotCount required' });
+    const committee = await Committee.create({ eventId, name, description, slotCount });
+    res.status(201).json({ committee });
+  } catch (e) { next(e); }
+});
+
+// DELETE /:id — organizer deletes a committee
+r.delete('/:id', requireAuth, async (req, res, next) => {
+  if (req.user.role !== 'organizer') return res.status(403).json({ error: 'Organizer only' });
+  try {
+    const committee = await Committee.findByIdAndDelete(req.params.id);
+    if (!committee) return res.status(404).json({ error: 'Not found' });
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
 export default r;

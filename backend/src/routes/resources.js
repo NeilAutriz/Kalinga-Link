@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { ResourceNeed } from '../models/ResourceNeed.js';
 import { Pledge } from '../models/Pledge.js';
 import { validate } from '../middleware/validate.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, requireRole } from '../middleware/auth.js';
 import { optionalAuth } from '../middleware/optionalAuth.js';
 
 const r = Router();
@@ -34,7 +34,13 @@ r.get('/', async (req, res, next) => {
 const pledgeSchema = z.object({
   resourceNeedId: z.string().min(1),
   donorName: z.string().min(2),
-  donorContact: z.string().optional(),
+  donorContact: z
+    .string()
+    .refine(
+      val => z.string().email().safeParse(val).success || /^(\+63|0)9\d{9}$/.test(val),
+      { message: 'Must be a valid email address or Philippine mobile number (09XXXXXXXXX or +639XXXXXXXXX)' }
+    )
+    .optional(),
   quantity: z.number().int().min(1),
 });
 
@@ -55,8 +61,25 @@ r.post('/pledges', optionalAuth, validate(pledgeSchema), async (req, res, next) 
             : 'Health partners are recorded as event partners and do not take pledge slots.',
       });
     }
+    const { quantity } = req.body;
     const need = await ResourceNeed.findById(req.body.resourceNeedId).lean();
     if (!need) return res.status(404).json({ error: 'Resource need not found' });
+
+    const [agg] = await Pledge.aggregate([
+      { $match: { resourceNeedId: need._id, status: { $in: ['pledged', 'received'] } } },
+      { $group: { _id: null, total: { $sum: '$quantity' } } },
+    ]);
+    const remaining = need.quantityNeeded - (agg?.total ?? 0);
+
+    if (remaining <= 0) {
+      return res.status(400).json({ error: 'This resource need has already been fully covered.' });
+    }
+    if (quantity > remaining) {
+      return res.status(400).json({
+        error: `Only ${remaining} ${need.unit} remaining. Please reduce your pledge quantity.`,
+      });
+    }
+
     const pledge = await Pledge.create({
       ...req.body,
       donorUserId: req.user?.sub,
@@ -84,6 +107,61 @@ r.delete('/pledges/:id', requireAuth, async (req, res, next) => {
     res.json({ pledge });
   } catch (e) {
     next(e);
+  }
+});
+
+const resourceNeedSchema = z.object({
+  eventId:        z.string().min(1),
+  itemName:       z.string().min(2).max(120),
+  category:       z.enum(['food', 'utensils', 'art', 'hygiene', 'equipment', 'transport', 'other']),
+  quantityNeeded: z.number().int().min(1),
+  unit:           z.string().min(1).max(30).default('pcs'),
+  notes:          z.string().max(300).optional(),
+});
+
+const resourceNeedUpdateSchema = resourceNeedSchema.partial().omit({ eventId: true });
+
+// Organizer: create resource need
+r.post('/', requireAuth, requireRole('organizer'), validate(resourceNeedSchema), async (req, res, next) => {
+  try {
+    const need = await ResourceNeed.create(req.body);
+    res.status(201).json({ resourceNeed: need });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Organizer: update resource need
+r.put('/:id', requireAuth, requireRole('organizer'), validate(resourceNeedUpdateSchema), async (req, res, next) => {
+  try {
+    const need = await ResourceNeed.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    if (!need) return res.status(404).json({ error: 'Resource need not found.' });
+    res.json({ resourceNeed: need });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Organizer: delete resource need (blocked if active pledges exist)
+r.delete('/:id', requireAuth, requireRole('organizer'), async (req, res, next) => {
+  try {
+    const need = await ResourceNeed.findById(req.params.id);
+    if (!need) return res.status(404).json({ error: 'Resource need not found.' });
+
+    const activePledges = await Pledge.countDocuments({
+      resourceNeedId: need._id,
+      status: { $in: ['pledged', 'received'] },
+    });
+    if (activePledges > 0) {
+      return res.status(409).json({
+        error: `Cannot delete: ${activePledges} active pledge(s) exist for this resource need.`,
+      });
+    }
+
+    await need.deleteOne();
+    res.status(204).end();
+  } catch (err) {
+    next(err);
   }
 });
 
