@@ -29,7 +29,7 @@ export function Step3Cart({ cart, onUpdateQuantity, onRemove, onNext, onBack }: 
           <p className="text-sm">Your pledge is empty. Go back to add supplies.</p>
         </div>
         <div className="pt-4 border-t border-bone-100">
-          <button type="button" onClick={onBack} className="btn-outline btn-sm flex items-center gap-1.5">
+          <button type="button" onClick={onBack} className="btn-outline flex items-center gap-1.5">
             <ArrowLeft size={14} /> Back to supplies
           </button>
         </div>
@@ -152,11 +152,11 @@ export function Step3Cart({ cart, onUpdateQuantity, onRemove, onNext, onBack }: 
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-4 border-t border-bone-100">
-        <button type="button" onClick={onBack} className="btn-outline btn-sm flex items-center gap-1.5">
+      <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t border-bone-100">
+        <button type="button" onClick={onBack} className="btn-outline w-full sm:w-auto flex items-center justify-center gap-1.5">
           <ArrowLeft size={14} /> Back
         </button>
-        <button type="button" onClick={onNext} className="btn-primary btn-sm flex items-center gap-1.5">
+        <button type="button" onClick={onNext} className="btn-primary w-full sm:w-auto flex items-center justify-center gap-1.5">
           Enter your details <ArrowRight size={14} />
         </button>
       </div>

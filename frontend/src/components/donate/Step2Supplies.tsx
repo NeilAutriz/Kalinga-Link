@@ -51,7 +51,7 @@ export function Step2Supplies({ resources, loading, cart, onAddToCart, onRemoveF
         <p className="text-sm text-ink-500 py-2">
           All supplies for this visit are fully pledged. Go back to choose another visit.
         </p>
-        <button type="button" onClick={onBack} className="btn-outline btn-sm flex items-center gap-1.5">
+        <button type="button" onClick={onBack} className="btn-outline flex items-center gap-1.5">
           <ArrowLeft size={14} /> Back
         </button>
       </div>
@@ -119,15 +119,15 @@ export function Step2Supplies({ resources, loading, cart, onAddToCart, onRemoveF
         })}
       </div>
 
-      <div className="flex items-center justify-between pt-4 border-t border-bone-100">
-        <button type="button" onClick={onBack} className="btn-outline btn-sm flex items-center gap-1.5">
+      <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t border-bone-100">
+        <button type="button" onClick={onBack} className="btn-outline w-full sm:w-auto flex items-center justify-center gap-1.5">
           <ArrowLeft size={14} /> Back
         </button>
         <button
           type="button"
           onClick={onNext}
           disabled={cart.length === 0}
-          className="btn-primary btn-sm flex items-center gap-1.5"
+          className="btn-primary w-full sm:w-auto flex items-center justify-center gap-1.5"
         >
           {cart.length === 0
             ? 'Add items to continue'
