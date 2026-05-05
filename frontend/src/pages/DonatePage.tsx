@@ -1,119 +1,123 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
-  Loader2, HeartHandshake, CheckCircle2, Calendar, MapPin, Sparkles,
-  Utensils, Stethoscope, BookOpen, Leaf, Briefcase, Palette,
-  Apple, Soup, Pill, Brush, Wrench, Truck, Package, Minus, Plus,
-  Info, ShieldCheck, Send, Lock,
+  Loader2, HeartHandshake, CheckCircle2, Calendar, MapPin,
+  Truck, Info, ShieldCheck, Send, Lock, Package,
 } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
 import { ProgressBar } from '../components/ProgressBar';
 import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
+import { WizardProgress } from '../components/donate/WizardProgress';
+import { Step1Events } from '../components/donate/Step1Events';
+import { Step2Supplies } from '../components/donate/Step2Supplies';
+import { Step3Cart } from '../components/donate/Step3Cart';
+import { Step4Details } from '../components/donate/Step4Details';
 import { useApi } from '../lib/useApi';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
 import { CAN_DONATE, ROLE_INFO } from '../lib/nav';
-import type { EventItem, ResourceCategory, ResourceNeed, Program } from '../lib/types';
-import { norm, PROGRAM_LABELS } from '../lib/types';
+import type { EventItem, ResourceNeed } from '../lib/types';
+import { norm } from '../lib/types';
 import { formatDate, pct } from '../lib/format';
 import clsx from 'clsx';
 
-/* ───────────── icon maps ───────────── */
-const PROGRAM_ICON: Record<Program, typeof Utensils> = {
-  feeding: Utensils, health: Stethoscope, learning: BookOpen,
-  environment: Leaf,  livelihood: Briefcase, youth: Palette,
-};
-const CATEGORY_ICON: Record<ResourceCategory, typeof Apple> = {
-  food: Soup, utensils: Apple, art: Brush, hygiene: Pill,
-  equipment: Wrench, transport: Truck, other: Package,
-};
-const CATEGORY_LABEL: Record<ResourceCategory, string> = {
-  food: 'Food', utensils: 'Utensils', art: 'Art / books', hygiene: 'Hygiene',
-  equipment: 'Equipment', transport: 'Transport', other: 'Other',
-};
+export type CartItem = { resourceNeed: ResourceNeed; quantity: number };
 
-/* ───────────── helpers ───────────── */
-const urgencyFor = (r: ResourceNeed): { label: string; cls: string } => {
-  const remaining = r.quantityNeeded - r.quantityReceived;
-  if (remaining <= 0)                            return { label: 'Fully pledged', cls: 'badge-bone' };
-  if (r.quantityReceived === 0)                  return { label: 'Not yet pledged', cls: 'badge-warn' };
-  if (remaining / r.quantityNeeded < 0.25)       return { label: 'Almost complete', cls: 'badge-info' };
-  if (remaining / r.quantityNeeded > 0.7)        return { label: 'Most needed', cls: 'badge-danger' };
-  return { label: 'In progress', cls: 'badge-green' };
+export type DonorDetails = {
+  name: string;
+  contact: string;
+  anonymous: boolean;
+  dropoff: 'self' | 'pickup' | 'onsite';
+  message: string;
 };
 
 export default function DonatePage() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [params] = useSearchParams();
 
-  // Role gate: signed-in organizers and health partners cannot pledge.
-  // Anonymous (signed-out) visitors are still welcome to donate.
   const blockedByRole = !!user && !CAN_DONATE.includes(user.role);
 
-  const events = useApi<EventItem[]>('/events?status=published');
-  const eventOptions = (events.data ?? [])
-    .map(norm)
-    .sort((a, b) => +new Date(a.eventDate) - +new Date(b.eventDate));
+  // ── Data fetching ──────────────────────────────────────────────────────────
+  const eventsRaw    = useApi<EventItem[]>('/events?status=published');
+  const allResRaw    = useApi<ResourceNeed[]>('/resources');
+  const events       = useMemo(() => (eventsRaw.data ?? []).map(norm).sort((a, b) => +new Date(a.eventDate) - +new Date(b.eventDate)), [eventsRaw.data]);
+  const allResources = useMemo(() => (allResRaw.data ?? []).map(norm), [allResRaw.data]);
 
-  const [eventId, setEventId] = useState<string>(params.get('event') ?? '');
-  const effectiveEventId = eventId || eventOptions[0]?.id || '';
-  const selectedEvent = eventOptions.find((e) => e.id === effectiveEventId);
-
-  const resources = useApi<ResourceNeed[]>(effectiveEventId ? `/resources?eventId=${effectiveEventId}` : null);
-  const allResources = useMemo(() => (resources.data ?? []).map(norm), [resources.data]);
-  const openResources = useMemo(
-    () => allResources.filter((r) => r.quantityReceived < r.quantityNeeded),
-    [allResources],
-  );
-
-  const [needId, setNeedId] = useState<string>(params.get('need') ?? '');
-  const effectiveNeedId = needId || openResources[0]?.id || '';
-  const selectedNeed = allResources.find((r) => r.id === effectiveNeedId);
-  const remaining = selectedNeed ? Math.max(0, selectedNeed.quantityNeeded - selectedNeed.quantityReceived) : 0;
-
-  const [donorName,    setDonorName]    = useState(user?.fullName ?? '');
-  const [donorContact, setDonorContact] = useState(user?.email ?? '');
-  const [anonymous,    setAnonymous]    = useState(false);
-  const [message,      setMessage]      = useState('');
-  const [quantity,     setQuantity]     = useState<number>(1);
-  const [dropoff,      setDropoff]      = useState<'self' | 'pickup' | 'onsite'>('self');
+  // ── Wizard state ───────────────────────────────────────────────────────────
+  const [step,          setStep]          = useState<1 | 2 | 3 | 4>(1);
+  const [selectedEvent, setSelectedEvent] = useState<EventItem | null>(null);
+  const [cart,          setCart]          = useState<CartItem[]>([]);
+  const [details,       setDetails]       = useState<DonorDetails>({
+    name: user?.fullName ?? '',
+    contact: user?.email ?? '',
+    anonymous: false,
+    dropoff: 'self',
+    message: '',
+  });
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [submitting,  setSubmitting]  = useState(false);
   const [thanksOpen,  setThanksOpen]  = useState(false);
+  const [nameError,   setNameError]   = useState('');
+  const [contactError,setContactError]= useState('');
 
-  const [nameError,    setNameError]    = useState('');
-  const [contactError, setContactError] = useState('');
+  useEffect(() => {
+    if (user) setDetails((d) => ({ ...d, name: user.fullName, contact: user.email }));
+  }, [user]);
 
-  useEffect(() => { if (user) { setDonorName(user.fullName); setDonorContact(user.email); } }, [user]);
-  // Reset supply choice & quantity whenever event changes
-  useEffect(() => { setNeedId(''); setQuantity(1); }, [effectiveEventId]);
-  // Clamp quantity to remaining
-  useEffect(() => { if (remaining > 0 && quantity > remaining) setQuantity(remaining); }, [remaining, quantity]);
+  // ── Per-event resource data ────────────────────────────────────────────────
+  const eventResRaw = useApi<ResourceNeed[]>(selectedEvent ? `/resources?eventId=${selectedEvent.id}` : null);
+  const eventResources = useMemo(() => (eventResRaw.data ?? []).map(norm), [eventResRaw.data]);
 
+  // ── Sidebar helpers ────────────────────────────────────────────────────────
+  const openResources = useMemo(
+    () => eventResources.filter((r) => r.quantityReceived < r.quantityNeeded),
+    [eventResources],
+  );
+  const eventProgress = useMemo(() => {
+    if (eventResources.length === 0) return { received: 0, needed: 0, percent: 0 };
+    const received = eventResources.reduce((s, r) => s + r.quantityReceived, 0);
+    const needed   = eventResources.reduce((s, r) => s + r.quantityNeeded, 0);
+    return { received, needed, percent: pct(received, needed) };
+  }, [eventResources]);
+
+  // ── Cart handlers ──────────────────────────────────────────────────────────
+  const addToCart = (need: ResourceNeed) => {
+    setCart((prev) => {
+      if (prev.some((c) => c.resourceNeed.id === need.id)) return prev;
+      const remaining = need.quantityNeeded - need.quantityReceived;
+      return [...prev, { resourceNeed: need, quantity: Math.max(1, Math.min(1, remaining)) }];
+    });
+  };
+
+  const removeFromCart = (needId: string) => setCart((prev) => prev.filter((c) => c.resourceNeed.id !== needId));
+
+  const updateQuantity = (needId: string, qty: number) =>
+    setCart((prev) => prev.map((c) => c.resourceNeed.id === needId ? { ...c, quantity: qty } : c));
+
+  // ── Step navigation ────────────────────────────────────────────────────────
+  const goToStep2 = (ev: EventItem) => { setSelectedEvent(ev); setCart([]); setStep(2); };
+  const goBack    = () => setStep((s) => Math.max(1, s - 1) as 1 | 2 | 3 | 4);
+
+  // ── Submission ─────────────────────────────────────────────────────────────
   const askConfirm = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!effectiveEventId) return toast.error('Pick a visit', 'Choose an upcoming Sitio Villegas visit first.');
-    if (!effectiveNeedId)  return toast.error('Pick a supply', 'Choose a resource to pledge.');
-    if (quantity < 1)      return toast.error('Quantity must be at least 1');
-
     let valid = true;
 
-    if (!anonymous && !donorName.trim()) {
+    if (!details.anonymous && !details.name.trim()) {
       setNameError('Please enter your name, or toggle anonymous donation.');
       valid = false;
     } else {
       setNameError('');
     }
 
-    if (!donorContact.trim()) {
+    if (!details.contact.trim()) {
       setContactError('Contact is required so we can confirm receipt.');
       valid = false;
     } else {
-      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(donorContact.trim());
-      const isPhone = /^(\+63|0)9\d{9}$/.test(donorContact.trim());
+      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(details.contact.trim());
+      const isPhone = /^(\+63|0)9\d{9}$/.test(details.contact.trim());
       if (!isEmail && !isPhone) {
         setContactError('Enter a valid email or PH mobile number (09XXXXXXXXX or +639XXXXXXXXX).');
         valid = false;
@@ -128,35 +132,41 @@ export default function DonatePage() {
 
   const submit = async () => {
     setSubmitting(true);
-    try {
-      await api.post('/resources/pledges', {
-        resourceNeedId: effectiveNeedId,
-        donorName: anonymous ? 'Anonymous donor' : donorName,
-        donorContact,
-        quantity,
-        ...(message.trim() ? { message: message.trim() } : {}),
-        ...(dropoff !== 'self' ? { dropoff } : {}),
-      });
-      toast.success('Pledge recorded', `${quantity} ${selectedNeed?.unit ?? 'item'}(s) of ${selectedNeed?.itemName}.`);
+    const donorName = details.anonymous ? 'Anonymous donor' : details.name;
+    let anyFailed = false;
+
+    for (const item of cart) {
+      try {
+        await api.post('/resources/pledges', {
+          resourceNeedId: item.resourceNeed.id,
+          donorName,
+          donorContact: details.contact,
+          quantity: item.quantity,
+          ...(details.message.trim() ? { message: details.message.trim() } : {}),
+          ...(details.dropoff !== 'self' ? { dropoff: details.dropoff } : {}),
+        });
+      } catch (e: any) {
+        anyFailed = true;
+        toast.error(
+          `Could not pledge ${item.resourceNeed.itemName}`,
+          e?.response?.data?.error ?? 'Please try again.',
+        );
+      }
+    }
+
+    setSubmitting(false);
+
+    if (!anyFailed) {
       setConfirmOpen(false);
       setThanksOpen(true);
-      setQuantity(1);
-      setMessage('');
-      resources.reload();
-    } catch (e: any) {
-      toast.error('Could not record pledge', e?.response?.data?.error ?? 'Please try again.');
-    } finally { setSubmitting(false); }
+      setCart([]);
+      setDetails((d) => ({ ...d, message: '' }));
+      eventResRaw.reload();
+      allResRaw.reload();
+    }
   };
 
-  const eventProgress = useMemo(() => {
-    if (allResources.length === 0) return { received: 0, needed: 0, percent: 0 };
-    const received = allResources.reduce((s, r) => s + r.quantityReceived, 0);
-    const needed   = allResources.reduce((s, r) => s + r.quantityNeeded, 0);
-    return { received, needed, percent: pct(received, needed) };
-  }, [allResources]);
-
-  // Role-gated explainer: shown to signed-in organizers / health partners
-  // instead of the donate form. They can still browse needs via /resources.
+  // ── Role gate ──────────────────────────────────────────────────────────────
   if (blockedByRole && user) {
     const info = ROLE_INFO[user.role];
     const Icon = info.icon;
@@ -182,7 +192,7 @@ export default function DonatePage() {
                     : 'Health partners are recorded as event partners and focus on child monitoring. Pledging supplies is handled by donor and volunteer accounts.'}
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Link to="/resources" className="btn-outline btn-sm"><Package size={14}/> Browse open needs</Link>
+                  <Link to="/resources" className="btn-outline btn-sm"><Package size={14} /> Browse open needs</Link>
                   {user.role === 'organizer' && (
                     <Link to="/organizer" className="btn-primary btn-sm">Back to organizer console</Link>
                   )}
@@ -191,7 +201,7 @@ export default function DonatePage() {
                   )}
                 </div>
                 <div className="mt-4 flex items-start gap-2 text-[11px] text-ink-500">
-                  <Lock size={12} className="mt-0.5 shrink-0"/>
+                  <Lock size={12} className="mt-0.5 shrink-0" />
                   <span>Backend also enforces this — <code>POST /api/v1/resources/pledges</code> rejects {info.label.toLowerCase()} accounts with HTTP 403.</span>
                 </div>
               </div>
@@ -202,268 +212,126 @@ export default function DonatePage() {
     );
   }
 
+  // ── Step titles ────────────────────────────────────────────────────────────
+  const STEP_META = [
+    { title: 'Choose a visit', subtitle: 'Only showing visits that still need supplies.' },
+    { title: 'Browse supplies', subtitle: selectedEvent ? `Open needs for "${selectedEvent.title}"` : '' },
+    { title: 'Your pledge', subtitle: 'Adjust how much of each item you want to pledge.' },
+    { title: 'Your details', subtitle: 'How should we reach you to coordinate drop-off?' },
+  ] as const;
+  const meta = STEP_META[step - 1];
+
   return (
     <div>
       <PageHeader
         eyebrow="Pledge supplies"
         title="Donate to the next Sitio Villegas visit"
-        description="Three quick steps: pick the visit, pick the supply, share your contact. Pledges are saved to the database and an organizer follows up to coordinate drop-off."
+        description="Four steps: pick the visit, choose supplies, set quantities, then share your contact."
       />
 
-      <section className="container-page grid lg:grid-cols-3 gap-6 pb-16">
-        {/* ═══════════════════ FORM ═══════════════════ */}
-        <form onSubmit={askConfirm} className="lg:col-span-2 space-y-6">
-          {/* Step 1 — Visit */}
-          <Step number={1} title="Choose a visit" subtitle={selectedEvent ? `${formatDate(selectedEvent.eventDate)} · ${selectedEvent.startTime}` : 'Pick from currently published Sitio Villegas visits.'}>
-            {events.loading && <LoaderRow text="Loading visits…" />}
-            {!events.loading && eventOptions.length === 0 && (
-              <p className="text-sm text-ink-500 py-2">No published visits at the moment. Please check back soon.</p>
-            )}
-            <div className="grid sm:grid-cols-2 gap-3">
-              {eventOptions.map((ev) => {
-                const Icon = ev.program ? PROGRAM_ICON[ev.program] : Sparkles;
-                const active = ev.id === effectiveEventId;
-                return (
-                  <button
-                    type="button"
-                    key={ev.id}
-                    onClick={() => setEventId(ev.id)}
-                    className={clsx(
-                      'text-left rounded-2xl border p-4 transition focus:outline-none focus-visible:ring-4 focus-visible:ring-maximum-100',
-                      active
-                        ? 'border-maximum-500 bg-maximum-50 shadow-soft'
-                        : 'border-bone-200 bg-milk hover:border-maximum-300',
-                    )}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className={clsx('h-9 w-9 grid place-items-center rounded-xl shrink-0',
-                        active ? 'bg-maximum-100 text-maximum-700' : 'bg-phthalo-50 text-phthalo-500')}>
-                        <Icon size={18}/>
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-[10px] uppercase tracking-[0.14em] font-semibold text-maximum-600">
-                          {ev.program ? PROGRAM_LABELS[ev.program] : 'Visit'}
-                        </div>
-                        <div className="text-sm font-semibold text-phthalo-500 leading-snug line-clamp-2">{ev.title}</div>
-                        <div className="mt-1 text-[11px] text-ink-500 flex items-center gap-1.5"><Calendar size={11}/>{formatDate(ev.eventDate)}</div>
-                        <div className="text-[11px] text-ink-500 flex items-center gap-1.5"><MapPin size={11}/>{ev.sitio || ev.location}</div>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
+      <section className="container-page grid lg:grid-cols-3 gap-6 pb-16 lg:items-start">
+        {/* ═══════════════════ LEFT COLUMN ═══════════════════ */}
+        <div className="lg:col-span-2 flex flex-col gap-4">
+          {/* Progress tracker */}
+          <WizardProgress step={step} />
+
+          {/* Step card */}
+          <div className="card">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="h-8 w-8 grid place-items-center rounded-full bg-phthalo-500 text-milk text-sm font-semibold shrink-0">
+                {step}
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-lg font-semibold text-phthalo-500 leading-tight">{meta.title}</h2>
+                {meta.subtitle && <p className="text-xs text-ink-500 mt-0.5">{meta.subtitle}</p>}
+              </div>
             </div>
-          </Step>
 
-          {/* Step 2 — Supply */}
-          <Step number={2} title="Choose a supply to pledge" subtitle={selectedEvent ? `Open needs for "${selectedEvent.title}"` : 'Pick a visit first.'}>
-            {resources.loading && <LoaderRow text="Loading supplies…" />}
-            {!resources.loading && openResources.length === 0 && (
-              <p className="text-sm text-ink-500 py-2">All supplies for this visit are fully pledged. Pick another visit or check back later.</p>
-            )}
-            {!resources.loading && openResources.length > 0 && (
-              <div className="grid sm:grid-cols-2 gap-3">
-                {openResources.map((r) => {
-                  const Icon = CATEGORY_ICON[r.category];
-                  const active = r.id === effectiveNeedId;
-                  const u = urgencyFor(r);
-                  const left = r.quantityNeeded - r.quantityReceived;
-                  return (
-                    <button
-                      type="button"
-                      key={r.id}
-                      onClick={() => { setNeedId(r.id); setQuantity(Math.min(quantity || 1, left)); }}
-                      className={clsx(
-                        'text-left rounded-2xl border p-4 transition focus:outline-none focus-visible:ring-4 focus-visible:ring-maximum-100',
-                        active
-                          ? 'border-maximum-500 bg-maximum-50 shadow-soft'
-                          : 'border-bone-200 bg-milk hover:border-maximum-300',
-                      )}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className={clsx('h-9 w-9 grid place-items-center rounded-xl shrink-0',
-                          active ? 'bg-maximum-100 text-maximum-700' : 'bg-bone-100 text-ink-700')}>
-                          <Icon size={18}/>
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="text-sm font-semibold text-phthalo-500 leading-snug">{r.itemName}</div>
-                            <span className={clsx(u.cls, '!text-[10px] !py-0.5 shrink-0')}>{u.label}</span>
-                          </div>
-                          <div className="text-[11px] text-ink-500 mt-0.5">{CATEGORY_LABEL[r.category]}</div>
-                          <div className="mt-2 flex items-center justify-between text-[11px] text-ink-700">
-                            <span>{r.quantityReceived} / {r.quantityNeeded} {r.unit}</span>
-                            <span className="text-maximum-700 font-medium">{left} {r.unit} left</span>
-                          </div>
-                          <ProgressBar value={pct(r.quantityReceived, r.quantityNeeded)} tone="maximum" />
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </Step>
-
-          {/* Step 3 — Quantity & details */}
-          <Step number={3} title="How much, and how should we reach you?" subtitle="Quantity, contact, and any note for the organizers.">
-            <div className="space-y-6">
-              {/* Quantity stepper */}
-              <div>
-                <label className="label">Quantity ({selectedNeed?.unit ?? 'units'})</label>
-                <div className="flex flex-wrap items-stretch gap-2">
-                  <button type="button" className="btn-outline !px-3" disabled={!selectedNeed || quantity <= 1}
-                          onClick={() => setQuantity((q) => Math.max(1, q - 1))}>
-                    <Minus size={14}/>
-                  </button>
-                  <input
-                    type="number" min={1} max={remaining || undefined}
-                    className="input text-center !w-24"
-                    value={quantity}
-                    onChange={(e) => setQuantity(Math.max(1, Math.min(remaining || Infinity, Number(e.target.value) || 1)))}
-                    disabled={!selectedNeed}
-                  />
-                  <button type="button" className="btn-outline !px-3" disabled={!selectedNeed || (remaining > 0 && quantity >= remaining)}
-                          onClick={() => setQuantity((q) => Math.min(remaining || Infinity, q + 1))}>
-                    <Plus size={14}/>
-                  </button>
-                  {selectedNeed && remaining > 1 && (
-                    <div className="flex flex-wrap items-center gap-1.5 ml-1">
-                      {[1, Math.ceil(remaining / 4), Math.ceil(remaining / 2), remaining]
-                        .filter((v, i, a) => v >= 1 && a.indexOf(v) === i)
-                        .map((v) => (
-                          <button key={v} type="button"
-                                  onClick={() => setQuantity(v)}
-                                  className={clsx('badge cursor-pointer !text-[11px] !py-1',
-                                    quantity === v ? 'bg-phthalo-500 text-milk' : 'bg-bone-100 text-ink-700 hover:bg-bone-200')}>
-                            {v === remaining ? `All (${v})` : v}
-                          </button>
-                        ))}
-                    </div>
-                  )}
-                </div>
-                {selectedNeed && (
-                  <p className="mt-2 text-xs text-ink-500">
-                    You can pledge up to <strong>{remaining} {selectedNeed.unit}</strong>. We will record any partial fulfilment when items arrive.
-                  </p>
-                )}
-              </div>
-
-              {/* Donor identity */}
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="label">Your name</label>
-                  <input
-                    className={clsx('input', nameError && 'border-red-400 focus:ring-red-300')}
-                    required={!anonymous} disabled={anonymous}
-                    placeholder={anonymous ? 'Anonymous donor' : 'Juana Dela Cruz'}
-                    value={anonymous ? '' : donorName}
-                    onChange={(e) => { setDonorName(e.target.value); if (nameError) setNameError(''); }} />
-                  {nameError && <p className="mt-1 text-xs text-red-600">{nameError}</p>}
-                </div>
-                <div>
-                  <label className="label">Contact (email or mobile)</label>
-                  <input
-                    className={clsx('input', contactError && 'border-red-400 focus:ring-red-300')}
-                    required type="text"
-                    placeholder="you@example.com  ·  09xx xxx xxxx"
-                    value={donorContact}
-                    onChange={(e) => { setDonorContact(e.target.value); if (contactError) setContactError(''); }} />
-                  {contactError && <p className="mt-1 text-xs text-red-600">{contactError}</p>}
-                </div>
-              </div>
-
-              <label className="flex items-start gap-2.5 text-sm text-ink-700 leading-snug">
-                <input type="checkbox" className="checkbox mt-0.5 shrink-0" checked={anonymous} onChange={(e) => setAnonymous(e.target.checked)} />
-                <span>Show me as <strong>Anonymous donor</strong> publicly (organizers still need your contact for receipt).</span>
-              </label>
-
-              {/* Drop-off preference */}
-              <div>
-                <label className="label">How will you fulfil the pledge?</label>
-                <div className="grid sm:grid-cols-3 gap-3">
-                  {([
-                    { v: 'self',   t: 'I will drop off',   d: 'At UPLB CSS office, weekday afternoons.' },
-                    { v: 'pickup', t: 'Please pick up',    d: 'Within Los Baños only. Coordinate via call.' },
-                    { v: 'onsite', t: 'Bring on visit day', d: 'Hand over directly at Sitio Villegas court.' },
-                  ] as const).map((o) => (
-                    <button key={o.v} type="button" onClick={() => setDropoff(o.v)}
-                      className={clsx('text-left rounded-xl border p-4 transition',
-                        dropoff === o.v
-                          ? 'border-maximum-500 bg-maximum-50'
-                          : 'border-bone-200 bg-milk hover:border-maximum-300')}>
-                      <div className="text-sm font-semibold text-phthalo-500 leading-tight">{o.t}</div>
-                      <div className="text-[11px] text-ink-500 mt-1.5 leading-relaxed">{o.d}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Optional message */}
-              <div>
-                <label className="label">Message to organizers <span className="text-ink-400 font-normal">(optional)</span></label>
-                <textarea
-                  rows={3} cols={1}
-                  className="textarea block w-full"
-                  placeholder="e.g. I can drop off Saturday morning. Brand of rice is Sinandomeng."
-                  value={message} onChange={(e) => setMessage(e.target.value.slice(0, 280))} />
-                <div className="mt-1 flex justify-end text-[11px] text-ink-400">{message.length}/280</div>
-              </div>
-
-              <button type="submit" disabled={!effectiveNeedId || !selectedEvent} className="btn-primary w-full justify-center">
-                <HeartHandshake size={16}/> Review & confirm pledge
-              </button>
+            <div>
+              {step === 1 && (
+                <Step1Events
+                  events={events}
+                  allResources={allResources}
+                  loading={eventsRaw.loading || allResRaw.loading}
+                  onSelect={goToStep2}
+                />
+              )}
+              {step === 2 && (
+                <Step2Supplies
+                  resources={eventResources}
+                  loading={eventResRaw.loading}
+                  cart={cart}
+                  onAddToCart={addToCart}
+                  onRemoveFromCart={removeFromCart}
+                  onNext={() => setStep(3)}
+                  onBack={goBack}
+                />
+              )}
+              {step === 3 && (
+                <Step3Cart
+                  cart={cart}
+                  onUpdateQuantity={updateQuantity}
+                  onRemove={removeFromCart}
+                  onNext={() => setStep(4)}
+                  onBack={goBack}
+                />
+              )}
+              {step === 4 && (
+                <Step4Details
+                  details={details}
+                  onChange={(patch) => setDetails((d) => ({ ...d, ...patch }))}
+                  nameError={nameError}
+                  contactError={contactError}
+                  onSubmit={askConfirm}
+                  onBack={goBack}
+                />
+              )}
             </div>
-          </Step>
-        </form>
+          </div>
+        </div>
 
         {/* ════════════════════ SIDEBAR ════════════════════ */}
         <aside className="space-y-4">
-          {/* Visit summary */}
           {selectedEvent && (
             <div className="card-tight">
               <div className="eyebrow">Selected visit</div>
               <h3 className="mt-1 font-semibold text-phthalo-500 leading-snug">{selectedEvent.title}</h3>
               <ul className="mt-3 space-y-1.5 text-xs text-ink-700">
-                <li className="flex gap-1.5"><Calendar size={12} className="mt-0.5 text-maximum-600"/>{formatDate(selectedEvent.eventDate)} · {selectedEvent.startTime}–{selectedEvent.endTime}</li>
-                <li className="flex gap-1.5"><MapPin   size={12} className="mt-0.5 text-maximum-600"/>{selectedEvent.sitio || selectedEvent.location}</li>
-                {selectedEvent.partnerOrg && <li className="flex gap-1.5"><HeartHandshake size={12} className="mt-0.5 text-maximum-600"/>{selectedEvent.partnerOrg}</li>}
+                <li className="flex gap-1.5"><Calendar size={12} className="mt-0.5 text-maximum-600" />{formatDate(selectedEvent.eventDate)} · {selectedEvent.startTime}–{selectedEvent.endTime}</li>
+                <li className="flex gap-1.5"><MapPin   size={12} className="mt-0.5 text-maximum-600" />{selectedEvent.sitio || selectedEvent.location}</li>
+                {selectedEvent.partnerOrg && <li className="flex gap-1.5"><HeartHandshake size={12} className="mt-0.5 text-maximum-600" />{selectedEvent.partnerOrg}</li>}
               </ul>
-
               <div className="mt-3 pt-3 border-t border-bone-200">
                 <div className="flex items-center justify-between text-[11px] text-ink-700">
                   <span>Total supplies covered</span>
                   <span className="font-medium">{eventProgress.received} / {eventProgress.needed} ({eventProgress.percent}%)</span>
                 </div>
                 <ProgressBar value={eventProgress.percent} tone="maximum" />
-                <p className="mt-2 text-[11px] text-ink-500">{openResources.length} of {allResources.length} supply types still need pledges.</p>
+                <p className="mt-2 text-[11px] text-ink-500">{openResources.length} of {eventResources.length} supply types still need pledges.</p>
               </div>
             </div>
           )}
 
-          {/* Drop-off info */}
           <div className="card-tight">
-            <div className="flex items-center gap-2 text-phthalo-500"><Truck size={16}/><h3 className="font-semibold">Drop-off & pickup</h3></div>
+            <div className="flex items-center gap-2 text-phthalo-500"><Truck size={16} /><h3 className="font-semibold">Drop-off & pickup</h3></div>
             <ul className="mt-3 space-y-2 text-sm text-ink-700">
-              <li className="flex gap-2"><MapPin size={14} className="mt-0.5 text-maximum-600 shrink-0"/> KalingaLink desk · UPLB CSS Office, ground floor.</li>
-              <li className="flex gap-2"><Calendar size={14} className="mt-0.5 text-maximum-600 shrink-0"/> Mon–Fri, 1:00–5:00 PM. Closed on UPLB holidays.</li>
-              <li className="flex gap-2"><Send size={14} className="mt-0.5 text-maximum-600 shrink-0"/> Coordinate large pledges first: <span className="font-medium">(049) 536-LINK</span></li>
-              <li className="flex gap-2"><CheckCircle2 size={14} className="mt-0.5 text-maximum-600 shrink-0"/> You'll get a receipt confirmation when items are received on-site.</li>
+              <li className="flex gap-2"><MapPin size={14} className="mt-0.5 text-maximum-600 shrink-0" /> KalingaLink desk · UPLB CSS Office, ground floor.</li>
+              <li className="flex gap-2"><Calendar size={14} className="mt-0.5 text-maximum-600 shrink-0" /> Mon–Fri, 1:00–5:00 PM. Closed on UPLB holidays.</li>
+              <li className="flex gap-2"><Send size={14} className="mt-0.5 text-maximum-600 shrink-0" /> Coordinate large pledges first: <span className="font-medium">(049) 536-LINK</span></li>
+              <li className="flex gap-2"><CheckCircle2 size={14} className="mt-0.5 text-maximum-600 shrink-0" /> You'll get a receipt confirmation when items are received on-site.</li>
             </ul>
           </div>
 
-          {/* Trust note */}
           <div className="card-tight bg-phthalo-500 text-milk border-phthalo-700">
-            <div className="flex items-center gap-2 text-maximum-200"><ShieldCheck size={16}/><h3 className="font-semibold">Where your pledge goes</h3></div>
+            <div className="flex items-center gap-2 text-maximum-200"><ShieldCheck size={16} /><h3 className="font-semibold">Where your pledge goes</h3></div>
             <p className="mt-2 text-sm text-bone-200/90 leading-relaxed">
               Every item is logged against a specific Sitio Villegas visit and reconciled by an organizer.
               Nothing is collected for general use — pledges are tied to one supply for one visit.
             </p>
           </div>
 
-          {/* Tips */}
           <div className="card-tight">
-            <div className="flex items-center gap-2 text-phthalo-500"><Info size={16}/><h3 className="font-semibold">Tips for first-time donors</h3></div>
+            <div className="flex items-center gap-2 text-phthalo-500"><Info size={16} /><h3 className="font-semibold">Tips for first-time donors</h3></div>
             <ul className="mt-3 space-y-1.5 text-xs text-ink-700">
               <li>• Smaller, frequent pledges (1–3 kg of rice, 5 hygiene kits) are easier to combine than one large pledge.</li>
               <li>• Perishable food: please coordinate so we can prep cold storage.</li>
@@ -484,53 +352,68 @@ export default function DonatePage() {
           <>
             <button className="btn-ghost" onClick={() => setConfirmOpen(false)} disabled={submitting}>Back to edit</button>
             <button className="btn-primary" onClick={submit} disabled={submitting}>
-              {submitting ? <><Loader2 className="animate-spin" size={14}/> Recording…</> : <>Confirm pledge</>}
+              {submitting ? <><Loader2 className="animate-spin" size={14} /> Recording…</> : <>Confirm pledge</>}
             </button>
           </>
         )}
       >
-        <dl className="grid grid-cols-3 gap-y-2 gap-x-3 text-sm">
-          <dt className="text-ink-500">Visit</dt>
-          <dd className="col-span-2 font-medium text-phthalo-500">{selectedEvent?.title ?? '—'}</dd>
-
-          <dt className="text-ink-500">Date</dt>
-          <dd className="col-span-2">{selectedEvent ? `${formatDate(selectedEvent.eventDate)} · ${selectedEvent.startTime}` : '—'}</dd>
-
-          <dt className="text-ink-500">Supply</dt>
-          <dd className="col-span-2">{selectedNeed?.itemName ?? '—'} <span className="text-ink-500">({CATEGORY_LABEL[selectedNeed?.category ?? 'other']})</span></dd>
-
-          <dt className="text-ink-500">Quantity</dt>
-          <dd className="col-span-2 font-medium">{quantity} {selectedNeed?.unit}</dd>
-
-          <dt className="text-ink-500">Donor</dt>
-          <dd className="col-span-2">{anonymous ? 'Anonymous donor' : donorName} <span className="text-ink-500">· {donorContact}</span></dd>
-
-          <dt className="text-ink-500">Fulfilment</dt>
-          <dd className="col-span-2 capitalize">{dropoff === 'self' ? 'I will drop off' : dropoff === 'pickup' ? 'Please pick up' : 'Bring on visit day'}</dd>
-
-          {message.trim() && (<>
-            <dt className="text-ink-500">Note</dt>
-            <dd className="col-span-2 italic text-ink-700">"{message.trim()}"</dd>
-          </>)}
+        <dl className="space-y-2 text-sm">
+          <div className="grid grid-cols-3 gap-x-3">
+            <dt className="text-ink-500">Visit</dt>
+            <dd className="col-span-2 font-medium text-phthalo-500">{selectedEvent?.title ?? '—'}</dd>
+          </div>
+          <div className="grid grid-cols-3 gap-x-3">
+            <dt className="text-ink-500">Date</dt>
+            <dd className="col-span-2">{selectedEvent ? `${formatDate(selectedEvent.eventDate)} · ${selectedEvent.startTime}` : '—'}</dd>
+          </div>
+          <div className="grid grid-cols-3 gap-x-3">
+            <dt className="text-ink-500">Donor</dt>
+            <dd className="col-span-2">{details.anonymous ? 'Anonymous donor' : details.name} <span className="text-ink-500">· {details.contact}</span></dd>
+          </div>
+          <div className="grid grid-cols-3 gap-x-3">
+            <dt className="text-ink-500">Fulfilment</dt>
+            <dd className="col-span-2 capitalize">
+              {details.dropoff === 'self' ? 'I will drop off' : details.dropoff === 'pickup' ? 'Please pick up' : 'Bring on visit day'}
+            </dd>
+          </div>
+          <div className="pt-2 border-t border-bone-100">
+            <dt className="text-ink-500 mb-1.5">Items pledged</dt>
+            {cart.map((item) => (
+              <div key={item.resourceNeed.id} className="flex justify-between text-sm py-0.5">
+                <span className="text-ink-700">{item.resourceNeed.itemName}</span>
+                <span className="font-medium text-phthalo-500">{item.quantity} {item.resourceNeed.unit}</span>
+              </div>
+            ))}
+          </div>
+          {details.message.trim() && (
+            <div className="grid grid-cols-3 gap-x-3 pt-2 border-t border-bone-100">
+              <dt className="text-ink-500">Note</dt>
+              <dd className="col-span-2 italic text-ink-700">"{details.message.trim()}"</dd>
+            </div>
+          )}
         </dl>
       </Modal>
 
       {/* ─── Success modal ─── */}
       <Modal
         open={thanksOpen}
-        onClose={() => setThanksOpen(false)}
+        onClose={() => { setThanksOpen(false); setStep(1); setSelectedEvent(null); }}
         title="Salamat sa iyong tulong!"
         size="sm"
         variant="success"
-        footer={<button className="btn-primary" onClick={() => setThanksOpen(false)}>Done</button>}
+        footer={(
+          <button className="btn-primary" onClick={() => { setThanksOpen(false); setStep(1); setSelectedEvent(null); }}>
+            Done
+          </button>
+        )}
       >
         <div className="text-center py-2">
           <div className="mx-auto h-12 w-12 rounded-full bg-maximum-100 grid place-items-center text-maximum-700">
             <CheckCircle2 size={24} />
           </div>
           <p className="mt-3 text-sm text-ink-700">
-            Your pledge to <strong>{selectedEvent?.title}</strong> is recorded.
-            An organizer will reach out via <strong>{donorContact}</strong> to coordinate drop-off.
+            Your pledge{cart.length > 1 ? 's' : ''} to <strong>{selectedEvent?.title}</strong> {cart.length > 1 ? 'are' : 'is'} recorded.
+            An organizer will reach out via <strong>{details.contact}</strong> to coordinate drop-off.
           </p>
           <p className="mt-2 text-xs text-ink-500">
             You can track your pledges any time on your dashboard.
@@ -539,26 +422,4 @@ export default function DonatePage() {
       </Modal>
     </div>
   );
-}
-
-/* ───────────── small helpers ───────────── */
-function Step({ number, title, subtitle, children }: { number: number; title: string; subtitle?: string; children: React.ReactNode }) {
-  return (
-    <div className="card">
-      <div className="flex items-start gap-3">
-        <div className="h-8 w-8 grid place-items-center rounded-full bg-phthalo-500 text-milk text-sm font-semibold shrink-0">
-          {number}
-        </div>
-        <div className="min-w-0 flex-1">
-          <h2 className="text-lg font-semibold text-phthalo-500 leading-tight">{title}</h2>
-          {subtitle && <p className="text-xs text-ink-500 mt-0.5">{subtitle}</p>}
-        </div>
-      </div>
-      <div className="mt-4">{children}</div>
-    </div>
-  );
-}
-
-function LoaderRow({ text }: { text: string }) {
-  return <div className="text-ink-500 flex items-center gap-2 text-sm py-2"><Loader2 className="animate-spin" size={14}/> {text}</div>;
 }
