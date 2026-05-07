@@ -11,6 +11,7 @@
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
     "seed": "node src/scripts/seed.js",
+    "seed:forum": "node src/scripts/seedForum.js",
     "lint": "eslint .",
     "test": "vitest run"
   },

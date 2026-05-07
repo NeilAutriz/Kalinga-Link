@@ -7,6 +7,7 @@ import childRoutes from './children.js';
 import dashboardRoutes from './dashboard.js';
 import meRoutes from './me.js';
 import chatRoutes from './chat.js';
+import forumRoutes from './forum.js';
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use('/children', childRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/me', meRoutes);
 router.use('/chat', chatRoutes);
+router.use('/forum', forumRoutes);
 
 export default router;

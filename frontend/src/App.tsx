@@ -15,6 +15,7 @@ import ProfilePage from './pages/ProfilePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import NotFoundPage from './pages/NotFoundPage';
+import CommunityPage from './pages/CommunityPage';
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
         <Route path="/events/:id" element={<EventDetailPage />} />
         <Route path="/resources" element={<ResourcesPage />} />
         <Route path="/donate" element={<DonatePage />} />
+        <Route path="/community" element={<CommunityPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 

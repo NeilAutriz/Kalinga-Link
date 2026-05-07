@@ -96,6 +96,47 @@ export type ImpactStats = {
   hoursVolunteered: number;
 };
 
+// ── Community Forum ────────────────────────────────────────
+
+export type PostType = 'status' | 'photo' | 'announcement';
+
+export type PostMedia = {
+  data: string;     // full data-URL (data:image/jpeg;base64,...)
+  mimeType: string;
+};
+
+export type ForumPost = {
+  id: string;
+  _id?: string;
+  authorId: string;
+  authorName: string;
+  authorRole: Role;
+  content: string;
+  media: PostMedia[];
+  type: PostType;
+  program: Program | null;
+  likes: string[];
+  likeCount: number;
+  commentCount: number;
+  isPinned: boolean;
+  isLiked: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ForumComment = {
+  id: string;
+  _id?: string;
+  postId: string;
+  authorId: string;
+  authorName: string;
+  authorRole: Role;
+  content: string;
+  createdAt: string;
+};
+
+// ──────────────────────────────────────────────────────────
+
 /** Normalize a Mongo doc with `_id` to a UI shape with `id`. */
 export const norm = <T extends { _id?: string; id?: string }>(x: T): T & { id: string } => ({
   ...x, id: (x.id ?? x._id) as string,

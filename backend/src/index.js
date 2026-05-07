@@ -31,6 +31,9 @@ app.use(
     credentials: true,
   }),
 );
+// Forum posts carry base64 media (images + short video clips). Apply a 15 MB
+// limit for that route family first; all other routes stay at 1 MB.
+app.use('/api/v1/forum', express.json({ limit: '15mb' }));
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));

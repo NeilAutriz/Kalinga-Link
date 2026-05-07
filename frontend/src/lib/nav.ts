@@ -2,7 +2,7 @@ import type { Role } from './types';
 import {
   Home, Info, CalendarDays, Package, HeartHandshake,
   LayoutDashboard, Stethoscope, ClipboardList,
-  Users, Gift, ShieldCheck, type LucideIcon,
+  Users, Gift, ShieldCheck, MessageSquare, type LucideIcon,
 } from 'lucide-react';
 
 export type NavItem = {
@@ -45,6 +45,7 @@ export const NAV: NavItem[] = [
   { to: '/events',    label: 'Events',    icon: CalendarDays,  group: 'public' },
   { to: '/resources', label: 'Resources', icon: Package,       group: 'public', hideForRoles: ['health'] },
   { to: '/donate',    label: 'Donate',    icon: HeartHandshake,group: 'public', hideForRoles: ['health', 'organizer'] },
+  { to: '/community', label: 'Community', icon: MessageSquare,  group: 'public' },
 
   // ── Account-area (signed-in only, role-gated) ──
   { to: '/dashboard', label: 'My dashboard', icon: LayoutDashboard,
