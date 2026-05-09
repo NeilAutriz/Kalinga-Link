@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
-import { Loader2, Plus, Pencil, ClipboardPlus } from 'lucide-react';
+import { Loader2, Plus, Pencil, ClipboardPlus, History } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
 import { EmptyState } from '../components/EmptyState';
 import { Stat } from '../components/Stat';
 import { ChildFormModal } from '../components/ChildFormModal';
 import { MeasurementFormModal } from '../components/MeasurementFormModal';
+import { ChildHistoryModal } from '../components/ChildHistoryModal';
 import { useApi } from '../lib/useApi';
-import type { ChildRecord } from '../lib/types';
+import type { ChildRecord, Measurement } from '../lib/types';
 import { norm } from '../lib/types';
 import { formatDate } from '../lib/format';
 
@@ -20,7 +21,20 @@ const STATUS_STYLE: Record<string, string> = {
 
 type MeasurementMode =
   | { kind: 'create'; child: ChildRecord }
-  | { kind: 'edit'; child: ChildRecord; measurementId: string };
+  | { kind: 'edit'; child: ChildRecord; measurement: Measurement };
+
+const latestAsMeasurement = (c: ChildRecord): Measurement | null => {
+  if (!c.lastMeasurementId) return null;
+  return {
+    id: c.lastMeasurementId,
+    childId: c.id,
+    eventId: c.lastEventId ?? '',
+    heightCm: c.lastHeightCm ?? null,
+    weightKg: c.lastWeightKg ?? null,
+    status: c.lastStatus,
+    recordedAt: c.lastMeasuredAt ?? new Date().toISOString(),
+  };
+};
 
 export default function ChildMonitoringPage() {
   const { data, loading, error, reload } = useApi<ChildRecord[]>('/children');
@@ -28,6 +42,8 @@ export default function ChildMonitoringPage() {
   const [q, setQ] = useState('');
   const [childModalOpen, setChildModalOpen] = useState(false);
   const [measurementMode, setMeasurementMode] = useState<MeasurementMode | null>(null);
+  const [historyChild, setHistoryChild] = useState<ChildRecord | null>(null);
+  const [returnToHistory, setReturnToHistory] = useState<ChildRecord | null>(null);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -41,6 +57,25 @@ export default function ChildMonitoringPage() {
     monitored: children.filter((c) => c.lastStatus === 'monitored').length,
     declined: children.filter((c) => c.lastStatus === 'declined').length,
   }), [children]);
+
+  const openMeasurementFromHistory = (mode: MeasurementMode) => {
+    setReturnToHistory(historyChild);
+    setHistoryChild(null);
+    setMeasurementMode(mode);
+  };
+
+  const closeMeasurement = () => {
+    setMeasurementMode(null);
+    if (returnToHistory) {
+      const child = returnToHistory;
+      setReturnToHistory(null);
+      setHistoryChild(child);
+    }
+  };
+
+  const onMeasurementSaved = () => {
+    reload();
+  };
 
   return (
     <div>
@@ -88,42 +123,62 @@ export default function ChildMonitoringPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-bone-200">
-                  {filtered.map((c) => (
-                    <tr key={c.id}>
-                      <td className="py-2 pr-4 font-mono text-xs">{c.anonCode}</td>
-                      <td className="py-2 pr-4">{c.firstName}</td>
-                      <td className="py-2 pr-4">{c.age}</td>
-                      <td className="py-2 pr-4">{c.sex}</td>
-                      <td className="py-2 pr-4">{c.guardianName}</td>
-                      <td className="py-2 pr-4">{c.lastHeightCm ? `${c.lastHeightCm} cm` : '—'}</td>
-                      <td className="py-2 pr-4">{c.lastWeightKg ? `${c.lastWeightKg} kg` : '—'}</td>
-                      <td className="py-2 pr-4"><span className={STATUS_STYLE[c.lastStatus] ?? 'badge-bone'}>{c.lastStatus.replace('_',' ')}</span></td>
-                      <td className="py-2 pr-4 text-xs text-ink-500">{c.lastMeasuredAt ? formatDate(c.lastMeasuredAt) : '—'}</td>
-                      <td className="py-2 pr-4">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            className="btn-ghost px-2 py-1 text-xs"
-                            title="Add reading"
-                            onClick={() => setMeasurementMode({ kind: 'create', child: c })}
+                  {filtered.map((c) => {
+                    const latest = latestAsMeasurement(c);
+                    return (
+                      <tr key={c.id}>
+                        <td className="py-2 pr-4 font-mono text-xs">{c.anonCode}</td>
+                        <td className="py-2 pr-4">{c.firstName}</td>
+                        <td className="py-2 pr-4">{c.age}</td>
+                        <td className="py-2 pr-4">{c.sex}</td>
+                        <td className="py-2 pr-4">{c.guardianName}</td>
+                        <td className="py-2 pr-4">{c.lastHeightCm ? `${c.lastHeightCm} cm` : '—'}</td>
+                        <td className="py-2 pr-4">{c.lastWeightKg ? `${c.lastWeightKg} kg` : '—'}</td>
+                        <td className="py-2 pr-4"><span className={STATUS_STYLE[c.lastStatus] ?? 'badge-bone'}>{c.lastStatus.replace('_',' ')}</span></td>
+                        <td className="py-2 pr-4 text-xs text-ink-500">{c.lastMeasuredAt ? formatDate(c.lastMeasuredAt) : '—'}</td>
+                        <td className="py-2 pr-4">
+                          <div
+                            role="group"
+                            aria-label="Row actions"
+                            className="inline-flex items-center rounded-full border border-bone-200 bg-bone-50/80 p-0.5 ml-auto float-right"
                           >
-                            <ClipboardPlus size={14}/> Reading
-                          </button>
-                          <button
-                            className="btn-ghost px-2 py-1 text-xs disabled:opacity-40"
-                            title={c.lastMeasurementId ? 'Edit latest reading' : 'No reading to edit yet'}
-                            disabled={!c.lastMeasurementId}
-                            onClick={() => c.lastMeasurementId && setMeasurementMode({
-                              kind: 'edit',
-                              child: c,
-                              measurementId: c.lastMeasurementId,
-                            })}
-                          >
-                            <Pencil size={14}/> Edit
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                            <button
+                              type="button"
+                              aria-label="View all readings"
+                              title="View all readings"
+                              onClick={() => setHistoryChild(c)}
+                              className="p-1.5 rounded-full text-phthalo-500 hover:bg-milk hover:text-phthalo-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-maximum-200 transition"
+                            >
+                              <History size={14}/>
+                            </button>
+                            <button
+                              type="button"
+                              aria-label="Add reading"
+                              title="Add reading"
+                              onClick={() => setMeasurementMode({ kind: 'create', child: c })}
+                              className="p-1.5 rounded-full text-phthalo-500 hover:bg-milk hover:text-phthalo-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-maximum-200 transition"
+                            >
+                              <ClipboardPlus size={14}/>
+                            </button>
+                            <button
+                              type="button"
+                              aria-label={latest ? 'Edit latest reading' : 'No reading to edit yet'}
+                              title={latest ? 'Edit latest reading' : 'No reading to edit yet'}
+                              disabled={!latest}
+                              onClick={() => latest && setMeasurementMode({
+                                kind: 'edit',
+                                child: c,
+                                measurement: latest,
+                              })}
+                              className="p-1.5 rounded-full text-phthalo-500 hover:bg-milk hover:text-phthalo-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-maximum-200 transition disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-phthalo-500 disabled:cursor-not-allowed"
+                            >
+                              <Pencil size={14}/>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -137,11 +192,19 @@ export default function ChildMonitoringPage() {
         onCreated={reload}
       />
 
+      <ChildHistoryModal
+        open={!!historyChild}
+        child={historyChild}
+        onClose={() => setHistoryChild(null)}
+        onAddReading={() => historyChild && openMeasurementFromHistory({ kind: 'create', child: historyChild })}
+        onEdit={(m) => historyChild && openMeasurementFromHistory({ kind: 'edit', child: historyChild, measurement: m })}
+      />
+
       <MeasurementFormModal
         open={!!measurementMode}
         mode={measurementMode}
-        onClose={() => setMeasurementMode(null)}
-        onSaved={reload}
+        onClose={closeMeasurement}
+        onSaved={onMeasurementSaved}
       />
     </div>
   );

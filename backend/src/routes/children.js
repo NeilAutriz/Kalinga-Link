@@ -105,6 +105,39 @@ r.post('/', requireAuth, requireRole('organizer', 'health'), async (req, res, ne
   }
 });
 
+// List all measurements for a child, newest first, with the linked event summary.
+r.get(
+  '/:childId/measurements',
+  requireAuth,
+  requireRole('organizer', 'health'),
+  async (req, res, next) => {
+    try {
+      const { childId } = req.params;
+      if (!isValidId(childId)) return res.status(400).json({ error: 'Invalid child id' });
+      const child = await ChildRecord.findById(childId).lean();
+      if (!child) return res.status(404).json({ error: 'Child not found' });
+      const rows = await Measurement.find({ childId })
+        .sort({ recordedAt: -1 })
+        .populate('eventId', 'title eventDate')
+        .lean();
+      res.json({
+        measurements: rows.map((m) => {
+          const populated = m.eventId && typeof m.eventId === 'object' ? m.eventId : null;
+          return {
+            ...m,
+            eventId: populated ? populated._id : m.eventId,
+            event: populated
+              ? { id: populated._id, title: populated.title, eventDate: populated.eventDate }
+              : null,
+          };
+        }),
+      });
+    } catch (e) {
+      next(e);
+    }
+  },
+);
+
 // Record a new measurement for a child.
 r.post(
   '/:childId/measurements',

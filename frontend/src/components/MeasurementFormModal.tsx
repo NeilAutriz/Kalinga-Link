@@ -4,12 +4,12 @@ import { Modal } from './Modal';
 import { useToast } from './Toast';
 import { useApi } from '../lib/useApi';
 import { createMeasurement, updateMeasurement } from '../services/api';
-import type { ChildRecord, EventItem, MeasurementStatus } from '../lib/types';
+import type { ChildRecord, EventItem, Measurement, MeasurementStatus } from '../lib/types';
 import { norm } from '../lib/types';
 
 type Mode =
   | { kind: 'create'; child: ChildRecord }
-  | { kind: 'edit'; child: ChildRecord; measurementId: string };
+  | { kind: 'edit'; child: ChildRecord; measurement: Measurement };
 
 type Props = {
   open: boolean;
@@ -39,14 +39,14 @@ const todayIso = () => new Date().toISOString().slice(0, 10);
 
 const initialFor = (mode: Mode | null): FormState => {
   if (mode?.kind === 'edit') {
-    const c = mode.child;
+    const m = mode.measurement;
     return {
-      eventId: c.lastEventId ?? '',
-      heightCm: c.lastHeightCm != null ? String(c.lastHeightCm) : '',
-      weightKg: c.lastWeightKg != null ? String(c.lastWeightKg) : '',
-      status: c.lastStatus,
-      recordedAt: c.lastMeasuredAt ? c.lastMeasuredAt.slice(0, 10) : todayIso(),
-      notes: '',
+      eventId: m.eventId ?? '',
+      heightCm: m.heightCm != null ? String(m.heightCm) : '',
+      weightKg: m.weightKg != null ? String(m.weightKg) : '',
+      status: m.status,
+      recordedAt: m.recordedAt ? m.recordedAt.slice(0, 10) : todayIso(),
+      notes: m.notes ?? '',
     };
   }
   return {
@@ -114,13 +114,13 @@ export function MeasurementFormModal({ open, mode, onClose, onSaved }: Props) {
         });
         toast.success('Reading recorded', `Saved for ${mode.child.anonCode}.`);
       } else {
-        await updateMeasurement(mode.child.id, mode.measurementId, {
+        await updateMeasurement(mode.child.id, mode.measurement.id, {
           heightCm: heightNum,
           weightKg: weightNum,
           status: form.status,
           recordedAt: recordedAtIso,
         });
-        toast.success('Reading updated', `Latest reading for ${mode.child.anonCode} was edited.`);
+        toast.success('Reading updated', `Reading for ${mode.child.anonCode} was edited.`);
       }
       onSaved();
       onClose();

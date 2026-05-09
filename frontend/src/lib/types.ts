@@ -119,6 +119,19 @@ export type MeasurementUpdateInput = {
   recordedAt?: string;
 };
 
+export type Measurement = {
+  id: string;
+  _id?: string;
+  childId: string;
+  eventId: string;
+  heightCm?: number | null;
+  weightKg?: number | null;
+  status: MeasurementStatus;
+  recordedAt: string;
+  notes?: string;
+  event?: { id: string; title: string; eventDate: string } | null;
+};
+
 export type ImpactStats = {
   eventsCompleted: number;
   childrenServed: number;
