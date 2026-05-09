@@ -1,5 +1,10 @@
 import axios from 'axios';
-import type { ResourceNeedInput } from '../lib/types';
+import type {
+  ResourceNeedInput,
+  ChildCreateInput,
+  MeasurementCreateInput,
+  MeasurementUpdateInput,
+} from '../lib/types';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? '/api/v1',
@@ -30,6 +35,20 @@ export const deleteCommittee = (id: string) =>
 
 export const updateEvent = (id: string, data: Partial<import('../lib/types').EventItem>) =>
   api.patch(`/events/${id}`, data).then(r => r.data);
+
+// ── Child monitoring ───────────────────────────────────────
+
+export const createChild = (data: ChildCreateInput) =>
+  api.post('/children', data).then(r => r.data);
+
+export const createMeasurement = (childId: string, data: MeasurementCreateInput) =>
+  api.post(`/children/${childId}/measurements`, data).then(r => r.data);
+
+export const updateMeasurement = (
+  childId: string,
+  measurementId: string,
+  data: MeasurementUpdateInput,
+) => api.patch(`/children/${childId}/measurements/${measurementId}`, data).then(r => r.data);
 
 // ── Community Forum ────────────────────────────────────────
 

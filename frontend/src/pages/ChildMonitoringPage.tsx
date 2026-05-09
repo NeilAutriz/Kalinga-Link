@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus, Pencil, ClipboardPlus } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
 import { EmptyState } from '../components/EmptyState';
 import { Stat } from '../components/Stat';
+import { ChildFormModal } from '../components/ChildFormModal';
+import { MeasurementFormModal } from '../components/MeasurementFormModal';
 import { useApi } from '../lib/useApi';
 import type { ChildRecord } from '../lib/types';
 import { norm } from '../lib/types';
@@ -16,10 +18,16 @@ const STATUS_STYLE: Record<string, string> = {
   baseline:   'badge-deep',
 };
 
+type MeasurementMode =
+  | { kind: 'create'; child: ChildRecord }
+  | { kind: 'edit'; child: ChildRecord; measurementId: string };
+
 export default function ChildMonitoringPage() {
-  const { data, loading, error } = useApi<ChildRecord[]>('/children');
+  const { data, loading, error, reload } = useApi<ChildRecord[]>('/children');
   const children = (data ?? []).map(norm);
   const [q, setQ] = useState('');
+  const [childModalOpen, setChildModalOpen] = useState(false);
+  const [measurementMode, setMeasurementMode] = useState<MeasurementMode | null>(null);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -50,7 +58,17 @@ export default function ChildMonitoringPage() {
       </section>
 
       <section className="container-page mt-8">
-        <div className="card-tight"><input className="input" placeholder="Search by name, code or guardian…" value={q} onChange={(e) => setQ(e.target.value)} /></div>
+        <div className="card-tight flex flex-wrap items-center gap-3">
+          <input
+            className="input flex-1 min-w-[220px]"
+            placeholder="Search by name, code or guardian…"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          <button className="btn-primary" onClick={() => setChildModalOpen(true)}>
+            <Plus size={14}/> Add child
+          </button>
+        </div>
 
         <div className="mt-6">
           {loading && <div className="text-ink-500 flex items-center gap-2"><Loader2 className="animate-spin" size={16}/> Loading records…</div>}
@@ -66,6 +84,7 @@ export default function ChildMonitoringPage() {
                     <th className="py-2 pr-4">Guardian</th>
                     <th className="py-2 pr-4">Last height</th><th className="py-2 pr-4">Last weight</th>
                     <th className="py-2 pr-4">Status</th><th className="py-2 pr-4">Measured</th>
+                    <th className="py-2 pr-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-bone-200">
@@ -80,6 +99,29 @@ export default function ChildMonitoringPage() {
                       <td className="py-2 pr-4">{c.lastWeightKg ? `${c.lastWeightKg} kg` : '—'}</td>
                       <td className="py-2 pr-4"><span className={STATUS_STYLE[c.lastStatus] ?? 'badge-bone'}>{c.lastStatus.replace('_',' ')}</span></td>
                       <td className="py-2 pr-4 text-xs text-ink-500">{c.lastMeasuredAt ? formatDate(c.lastMeasuredAt) : '—'}</td>
+                      <td className="py-2 pr-4">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            className="btn-ghost px-2 py-1 text-xs"
+                            title="Add reading"
+                            onClick={() => setMeasurementMode({ kind: 'create', child: c })}
+                          >
+                            <ClipboardPlus size={14}/> Reading
+                          </button>
+                          <button
+                            className="btn-ghost px-2 py-1 text-xs disabled:opacity-40"
+                            title={c.lastMeasurementId ? 'Edit latest reading' : 'No reading to edit yet'}
+                            disabled={!c.lastMeasurementId}
+                            onClick={() => c.lastMeasurementId && setMeasurementMode({
+                              kind: 'edit',
+                              child: c,
+                              measurementId: c.lastMeasurementId,
+                            })}
+                          >
+                            <Pencil size={14}/> Edit
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -88,6 +130,19 @@ export default function ChildMonitoringPage() {
           )}
         </div>
       </section>
+
+      <ChildFormModal
+        open={childModalOpen}
+        onClose={() => setChildModalOpen(false)}
+        onCreated={reload}
+      />
+
+      <MeasurementFormModal
+        open={!!measurementMode}
+        mode={measurementMode}
+        onClose={() => setMeasurementMode(null)}
+        onSaved={reload}
+      />
     </div>
   );
 }

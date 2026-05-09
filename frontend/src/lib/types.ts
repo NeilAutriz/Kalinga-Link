@@ -72,6 +72,8 @@ export type Pledge = {
   createdAt: string;
 };
 
+export type MeasurementStatus = 'baseline' | 'monitored' | 'improved' | 'no_change' | 'declined';
+
 export type ChildRecord = {
   id: string;
   _id?: string;
@@ -80,11 +82,41 @@ export type ChildRecord = {
   age: number;
   sex: 'M' | 'F' | 'X';
   guardianName: string;
+  guardianContact?: string;
   consentGiven: boolean;
-  lastStatus: 'baseline' | 'monitored' | 'improved' | 'no_change' | 'declined';
+  notes?: string;
+  lastMeasurementId: string | null;
+  lastStatus: MeasurementStatus;
   lastMeasuredAt: string | null;
-  lastHeightCm?: number;
-  lastWeightKg?: number;
+  lastHeightCm?: number | null;
+  lastWeightKg?: number | null;
+  lastEventId?: string | null;
+};
+
+export type ChildCreateInput = {
+  firstName: string;
+  age: number;
+  sex: 'M' | 'F' | 'X';
+  guardianName: string;
+  guardianContact?: string;
+  consentGiven: boolean;
+  notes?: string;
+};
+
+export type MeasurementCreateInput = {
+  eventId: string;
+  heightCm?: number;
+  weightKg?: number;
+  status: MeasurementStatus;
+  recordedAt?: string;
+  notes?: string;
+};
+
+export type MeasurementUpdateInput = {
+  heightCm?: number;
+  weightKg?: number;
+  status?: MeasurementStatus;
+  recordedAt?: string;
 };
 
 export type ImpactStats = {
