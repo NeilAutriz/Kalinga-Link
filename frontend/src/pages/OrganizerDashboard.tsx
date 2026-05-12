@@ -79,8 +79,7 @@ function SupplyManager({ eventId }: { eventId: string }) {
     },
   });
 
-  const handleAdd = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAdd = () => {
     const resolvedName = isCustom ? customItemName.trim() : itemName;
     if (!resolvedName) {
       toast.error('Item name required', 'Please select or enter an item name.');
@@ -143,7 +142,7 @@ function SupplyManager({ eventId }: { eventId: string }) {
       )}
 
       {/* Add Supply form */}
-      <form onSubmit={handleAdd} className="rounded-xl border border-bone-200 bg-bone-50 p-4 space-y-3">
+      <div className="rounded-xl border border-bone-200 bg-bone-50 p-4 space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold text-phthalo-500 uppercase tracking-wider">Add Supply</span>
           <button
@@ -174,7 +173,6 @@ function SupplyManager({ eventId }: { eventId: string }) {
             {isCustom ? (
               <input
                 className="input"
-                required
                 placeholder="Custom item name"
                 value={customItemName}
                 onChange={e => setCustomItemName(e.target.value)}
@@ -184,7 +182,6 @@ function SupplyManager({ eventId }: { eventId: string }) {
                 className="select"
                 value={itemName}
                 onChange={e => setItemName(e.target.value)}
-                required
               >
                 <option value="">— Select item —</option>
                 {catalogueItems.map(item => (
@@ -203,7 +200,6 @@ function SupplyManager({ eventId }: { eventId: string }) {
               type="number"
               min={1}
               className="input"
-              required
               value={quantityNeeded}
               onChange={e => setQuantityNeeded(Math.max(1, Number(e.target.value) || 1))}
             />
@@ -213,7 +209,6 @@ function SupplyManager({ eventId }: { eventId: string }) {
             <label className="label">Unit</label>
             <input
               className="input"
-              required
               placeholder="pcs, kg, pack…"
               value={unit}
               onChange={e => setUnit(e.target.value)}
@@ -222,7 +217,8 @@ function SupplyManager({ eventId }: { eventId: string }) {
         </div>
 
         <button
-          type="submit"
+          type="button"
+          onClick={handleAdd}
           disabled={addMutation.isPending}
           className="btn-primary btn-sm"
         >
@@ -230,7 +226,7 @@ function SupplyManager({ eventId }: { eventId: string }) {
             ? <><Loader2 className="animate-spin" size={13} /> Adding…</>
             : <><Plus size={13} /> Add Supply</>}
         </button>
-      </form>
+      </div>
     </div>
   );
 }
@@ -270,8 +266,7 @@ function CommitteeManager({ eventId }: { eventId: string }) {
     onError: (err: any) => toast.error('Could not remove committee', err?.response?.data?.error ?? 'Please try again.'),
   });
 
-  const handleAdd = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAdd = () => {
     if (!name.trim()) { toast.error('Name required'); return; }
     if (slotCount < 1) { toast.error('Slots must be at least 1'); return; }
     addMutation.mutate();
@@ -308,12 +303,12 @@ function CommitteeManager({ eventId }: { eventId: string }) {
           })}
         </ul>
       )}
-      <form onSubmit={handleAdd} className="rounded-xl border border-bone-200 bg-bone-50 p-4 space-y-3">
+      <div className="rounded-xl border border-bone-200 bg-bone-50 p-4 space-y-3">
         <span className="text-xs font-semibold text-phthalo-500 uppercase tracking-wider">Add Committee</span>
         <div className="grid sm:grid-cols-2 gap-3">
           <div>
             <label className="label">Name</label>
-            <input className="input" required value={name} onChange={e => setName(e.target.value)} placeholder="Food preparation" />
+            <input className="input" value={name} onChange={e => setName(e.target.value)} placeholder="Food preparation" />
           </div>
           <div>
             <label className="label">Description (optional)</label>
@@ -321,13 +316,13 @@ function CommitteeManager({ eventId }: { eventId: string }) {
           </div>
           <div>
             <label className="label">Volunteer slots</label>
-            <input type="number" min={1} className="input" required value={slotCount} onChange={e => setSlotCount(Math.max(1, Number(e.target.value) || 1))} />
+            <input type="number" min={1} className="input" value={slotCount} onChange={e => setSlotCount(Math.max(1, Number(e.target.value) || 1))} />
           </div>
         </div>
-        <button type="submit" disabled={addMutation.isPending} className="btn-primary btn-sm">
+        <button type="button" onClick={handleAdd} disabled={addMutation.isPending} className="btn-primary btn-sm">
           {addMutation.isPending ? <><Loader2 className="animate-spin" size={13}/> Adding…</> : <><Plus size={13}/> Add Committee</>}
         </button>
-      </form>
+      </div>
     </div>
   );
 }
@@ -341,8 +336,7 @@ function CommitteeDraftList({ drafts, onChange }: { drafts: CommitteeDraft[]; on
   const [slotCount, setSlotCount] = useState<number>(1);
   const { toast } = useToast();
 
-  const add = (e: React.FormEvent) => {
-    e.preventDefault();
+  const add = () => {
     if (!name.trim()) { toast.error('Name required'); return; }
     onChange([...drafts, { name: name.trim(), description: description.trim(), slotCount }]);
     setName(''); setDescription(''); setSlotCount(1);
@@ -366,7 +360,7 @@ function CommitteeDraftList({ drafts, onChange }: { drafts: CommitteeDraft[]; on
           ))}
         </ul>
       )}
-      <form onSubmit={add} className="rounded-xl border border-bone-200 bg-bone-50 p-4 space-y-3">
+      <div className="rounded-xl border border-bone-200 bg-bone-50 p-4 space-y-3">
         <span className="text-xs font-semibold text-phthalo-500 uppercase tracking-wider">Add Committee</span>
         <div className="grid sm:grid-cols-2 gap-3">
           <div>
@@ -382,8 +376,8 @@ function CommitteeDraftList({ drafts, onChange }: { drafts: CommitteeDraft[]; on
             <input type="number" min={1} className="input" value={slotCount} onChange={e => setSlotCount(Math.max(1, Number(e.target.value) || 1))} />
           </div>
         </div>
-        <button type="submit" className="btn-primary btn-sm"><Plus size={13}/> Add Committee</button>
-      </form>
+        <button type="button" onClick={add} className="btn-primary btn-sm"><Plus size={13}/> Add Committee</button>
+      </div>
     </div>
   );
 }
